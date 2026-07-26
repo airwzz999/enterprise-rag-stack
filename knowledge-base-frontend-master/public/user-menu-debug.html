@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Menu Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .user-menu-demo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            min-width: 180px;
+            max-width: 220px;
+            border: 1px solid #e2e8f0;
+            background: white;
+        }
+        .user-menu-demo:hover {
+            background-color: #f1f5f9;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .user-info-container {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+        }
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+        .user-role {
+            font-size: 12px;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+        .test-results {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .issue {
+            background: #fee;
+            padding: 10px;
+            border-left: 3px solid #c33;
+            margin: 10px 0;
+        }
+        .success {
+            background: #efe;
+            padding: 10px;
+            border-left: 3px solid #3c3;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 User Menu Debug Tool</h1>
+
+    <div class="debug-section">
+        <h2>Expected Appearance</h2>
+        <div class="user-menu-demo">
+            <div class="user-avatar">JD</div>
+            <div class="user-info-container">
+                <div class="user-name">John Doe</div>
+                <div class="user-role">Knowledge Administrator</div>
+            </div>
+        </div>
+        <p style="margin-top: 10px; color: #666;">↑ This is what the user menu should look like</p>
+    </div>
+
+    <div class="debug-section">
+        <h2>Check the Current Application State</h2>
+        <button onclick="checkApplicationState()">Check Application State</button>
+        <div id="checkResults" class="test-results" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Common Issue Diagnosis</h2>
+
+        <div class="issue">
+            <strong>Issue 1: The user menu doesn't display at all</strong>
+            <p>Possible causes:</p>
+            <ul>
+                <li>The CSS file didn't load correctly</li>
+                <li>The user data is null or undefined</li>
+                <li>The component didn't render correctly</li>
+            </ul>
+            <p><strong>Solution:</strong></p>
+            <ol>
+                <li>Check the browser console for errors</li>
+                <li>Check whether there's user data in localStorage</li>
+                <li>Clear the browser cache and try again</li>
+            </ol>
+        </div>
+
+        <div class="issue">
+            <strong>Issue 2: The avatar shows but the text doesn't</strong>
+            <p>Possible causes:</p>
+            <ul>
+                <li>The .user-info-container styles are missing</li>
+                <li>The text color matches the background color</li>
+                <li>A CSS selector is being overridden</li>
+            </ul>
+            <p><strong>Solution:</strong></p>
+            <ol>
+                <li>Check whether layout.css loaded correctly</li>
+                <li>Check the CSS load order</li>
+                <li>Inspect the element using the browser developer tools</li>
+            </ol>
+        </div>
+
+        <div class="success">
+            <strong>Issues Confirmed Fixed</strong>
+            <ul>
+                <li>✅ user-info-container styles have been added</li>
+                <li>✅ Text overflow handling has been optimized</li>
+                <li>✅ The user menu width has been adjusted</li>
+                <li>✅ Responsive design has been optimized</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h2>Manual Test Steps</h2>
+        <ol>
+            <li>Open the browser developer tools (F12)</li>
+            <li>Switch to the Elements tab</li>
+            <li>Find the .user-menu element</li>
+            <li>Check whether a .user-info-container child element exists</li>
+            <li>Check whether the computed styles are applied correctly</li>
+        </ol>
+    </div>
+
+    <div class="debug-section">
+        <h2>CSS Checklist</h2>
+        <div class="test-results">
+# CSS classes that should exist:
+.user-menu { display: flex; align-items: center; ... }
+.user-avatar { width: 40px; height: 40px; ... }
+.user-info-container { flex: 1; min-width: 0; ... }
+.user-name { font-size: 14px; ... }
+.user-role { font-size: 12px; ... }
+
+# How to check:
+1. Open the browser developer tools
+2. Check the Sources or Network tab
+3. Confirm layout.css has loaded
+4. Search for whether the CSS classes above exist
+        </div>
+    </div>
+
+    <script>
+        function checkApplicationState() {
+            const results = document.getElementById('checkResults');
+            let output = '';
+
+            // Check localStorage
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+
+            output += '=== Application State Check ===\n\n';
+            output += `Token present: ${token ? '✅ Yes' : '❌ No'}\n`;
+            output += `User data present: ${user ? '✅ Yes' : '❌ No'}\n`;
+
+            if (user) {
+                output += `Username: ${user.username || 'not set'}\n`;
+                output += `User role: ${user.role || 'not set'}\n`;
+            } else {
+                output += '⚠️ User data is empty, need to log in first\n';
+            }
+
+            output += '\n=== CSS Load Check ===\n';
+            const stylesheets = document.styleSheets;
+            let hasLayoutCss = false;
+            for (let i = 0; i < stylesheets.length; i++) {
+                if (stylesheets[i].href && stylesheets[i].href.includes('layout.css')) {
+                    hasLayoutCss = true;
+                    output += '✅ layout.css loaded\n';
+                    break;
+                }
+            }
+            if (!hasLayoutCss) {
+                output += '❌ layout.css not loaded\n';
+            }
+
+            output += '\n=== Suggestions ===\n';
+            if (!token || !user) {
+                output += '1. Please log in to the system first\n';
+                output += '2. Check whether the login functionality works correctly\n';
+            }
+            if (!hasLayoutCss) {
+                output += '1. Check whether the layout.css file exists\n';
+                output += '2. Confirm layout.css is correctly imported in main.tsx\n';
+            }
+
+            results.textContent = output;
+        }
+
+        // Automatically check when the page loads
+        window.onload = function() {
+            checkApplicationState();
+        };
+    </script>
+</body>
+</html>

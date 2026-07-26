@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .section h3 {
+            margin-top: 0;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Login Functionality Test Page</h1>
+
+    <!-- 1. Login test -->
+    <div class="section">
+        <h3>1️⃣ User Login</h3>
+        <input type="text" id="username" placeholder="Username" value="admin">
+        <input type="password" id="password" placeholder="Password" value="123456">
+        <button onclick="testLogin()">Log In</button>
+        <pre id="loginResult">Waiting to log in...</pre>
+    </div>
+
+    <!-- 2. Get user info -->
+    <div class="section">
+        <h3>2️⃣ Get Current User Info</h3>
+        <button onclick="testGetUser()">Get User Info</button>
+        <pre id="userResult">Waiting for request...</pre>
+    </div>
+
+    <!-- 3. View current Token -->
+    <div class="section">
+        <h3>3️⃣ View Current Token</h3>
+        <button onclick="showToken()">Show Token</button>
+        <pre id="tokenResult">Waiting for query...</pre>
+    </div>
+
+    <!-- 4. Clear login info -->
+    <div class="section">
+        <h3>4️⃣ Clear Login Info</h3>
+        <button onclick="clearAuth()">Clear</button>
+        <pre id="clearResult">Waiting to clear...</pre>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentToken = null;
+
+        // 1. Test login
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultEl = document.getElementById('loginResult');
+
+            try {
+                resultEl.innerHTML = '<span class="info">Logging in...</span>';
+
+                const response = await fetch(`${API_BASE}/auth/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200 && data.data) {
+                    currentToken = data.data.accessToken;
+
+                    // Save the Token to LocalStorage
+                    localStorage.setItem('access_token', currentToken);
+                    localStorage.setItem('refresh_token', data.data.refreshToken);
+                    localStorage.setItem('user_info', JSON.stringify(data.data.userInfo));
+
+                    // Save the Token to a Cookie (expires in 7 days)
+                    document.cookie = `access_token=${currentToken}; path=/; max-age=${7*24*60*60}`;
+                    document.cookie = `refresh_token=${data.data.refreshToken}; path=/; max-age=${7*24*60*60}`;
+
+                    resultEl.innerHTML = `<span class="success">✅ Login successful!</span>
+<strong>Token:</strong> ${currentToken.substring(0, 50)}...
+<strong>Username:</strong> ${data.data.userInfo.username}
+<strong>Nickname:</strong> ${data.data.userInfo.nickname}`;
+                } else {
+                    resultEl.innerHTML = `<span class="error">❌ Login failed: ${data.message}</span>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">❌ Request failed: ${error.message}</span>`;
+            }
+        }
+
+        // 2. Test getting user info
+        async function testGetUser() {
+            const resultEl = document.getElementById('userResult');
+            const token = localStorage.getItem('access_token') || currentToken;
+
+            if (!token) {
+                resultEl.innerHTML = '<span class="error">❌ Please log in first</span>';
+                return;
+            }
+
+            try {
+                resultEl.innerHTML = `<span class="info">Requesting...</span>
+<span class="info">Authorization: Bearer ${token.substring(0, 30)}...</span>`;
+
+                const response = await fetch(`${API_BASE}/auth/auth/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200 && data.data) {
+                    resultEl.innerHTML = `<span class="success">✅ Retrieved successfully!</span>
+<strong>User ID:</strong> ${data.data.id}
+<strong>Username:</strong> ${data.data.username}
+<strong>Real name:</strong> ${data.data.realName}
+<strong>Email:</strong> ${data.data.email}`;
+                } else {
+                    resultEl.innerHTML = `<span class="error">❌ Retrieval failed: ${data.message}</span>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">❌ Request failed: ${error.message}</span>`;
+            }
+        }
+
+        // 3. Show the current Token
+        function showToken() {
+            const resultEl = document.getElementById('tokenResult');
+            const token = localStorage.getItem('access_token');
+            const cookieToken = getCookie('access_token');
+
+            resultEl.innerHTML = `<strong>LocalStorage Token:</strong> ${token ? token.substring(0, 50) + '...' : 'none'}
+<strong>Cookie Token:</strong> ${cookieToken ? cookieToken.substring(0, 50) + '...' : 'none'}
+<strong>UserInfo:</strong> ${localStorage.getItem('user_info') || 'none'}`;
+        }
+
+        // 4. Clear login info
+        function clearAuth() {
+            const resultEl = document.getElementById('clearResult');
+
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_info');
+
+            document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+            currentToken = null;
+
+            resultEl.innerHTML = '<span class="success">✅ All login info has been cleared</span>';
+        }
+
+        // Helper function: get a Cookie
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Check login state when the page loads
+        window.onload = function() {
+            showToken();
+        };
+    </script>
+</body>
+</html>

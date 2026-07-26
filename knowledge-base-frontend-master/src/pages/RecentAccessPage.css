@@ -1,0 +1,107 @@
+.empty-card {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.access-list-container {
+  padding-top: 8px;
+}
+
+.access-count-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.access-card {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.access-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.title-icon {
+  font-size: 18px;
+  color: #2563eb;
+}
+
+.document-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #0f172a;
+  flex: 1;
+  min-width: 0;
+}
+
+.document-summary {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.meta-icon {
+  font-size: 12px;
+}
+
+.access-time {
+  margin-left: auto;
+  color: #94a3b8;
+}

@@ -1,0 +1,171 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: kb-gateway
+  main:
+    web-application-type: reactive
+  config:
+    import: optional:nacos:kb-gateway-dev.yaml
+  cloud:
+    nacos:
+      config:
+        namespace: knowledge
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        file-extension: yaml
+        group: KNOWLEDGE_BASE
+        enabled: true
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: knowledge
+        group: ${COMPUTER_ID:${USER:default}}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        ip: 127.0.0.1
+        metadata:
+          developer: ${COMPUTER_ID:${USER:unknown}}
+    # Gateway configuration
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      # HTTP timeout configuration
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 120s
+        pool:
+          max-connections: 500
+          max-idle-time: 30s
+          max-life-time: 60s
+          acquire-timeout: 120000
+
+      # Global CORS configuration
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+      # Route configuration
+      routes:
+        # User auth service route
+        - id: kb-user-auth
+          uri: lb://kb-user-auth
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=2
+
+        # Document service route
+        - id: kb-document
+          uri: lb://kb-document
+          predicates:
+            - Path=/api/document/**
+          filters:
+            - StripPrefix=2
+
+        # File service route
+        - id: kb-file
+          uri: lb://kb-file
+          predicates:
+            - Path=/api/file/**
+          filters:
+            - StripPrefix=2
+
+        # AI service route
+        - id: kb-ai
+          uri: lb://kb-ai
+          predicates:
+            - Path=/api/ai/**
+          filters:
+            - StripPrefix=2
+
+        # Knowledge graph service route
+        - id: kb-graph
+          uri: lb://kb-graph
+          predicates:
+            - Path=/api/graph/**
+          filters:
+            - StripPrefix=2
+
+        # Search service route
+        - id: kb-search
+          uri: lb://kb-search
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - StripPrefix=2
+
+        # Statistics and analytics service route
+        - id: kb-statistics
+          uri: lb://kb-statistics
+          predicates:
+            - Path=/api/statistics/**
+          filters:
+            - StripPrefix=1
+
+        # Foundation service route (notifications, config, logs, dictionaries)
+        - id: kb-foundation
+          uri: lb://kb-foundation
+          predicates:
+            - Path=/api/notifications/**, /api/config/**, /api/logs/**, /api/dicts/**
+          filters:
+            - StripPrefix=1
+
+        # WebSocket route (connects directly to kb-foundation's STOMP endpoint)
+        - id: kb-foundation-ws
+          uri: lb:ws://kb-foundation
+          predicates:
+            - Path=/ws/**
+
+  # Redis configuration (used for gateway rate limiting and caching)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 2
+      timeout: 10000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-wait: 3000ms
+          max-idle: 10
+          min-idle: 5
+          time-between-eviction-runs: 30s
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.knowledge.base: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+
+# Gateway configuration
+gateway:
+  # Whitelist (paths that do not require authentication)
+  white-list:
+    - /api/auth/auth/login
+    - /api/auth/auth/register
+    - /api/auth/auth/refresh
+    - /api/document/share/**
+    - /api/files/**
+    - /api/ai/**
+    - /api/config/public
+    - /api/notifications/templates
+    - /ws/**
+    - /doc.html
+    - /swagger-resources
+    - /v3/api-docs

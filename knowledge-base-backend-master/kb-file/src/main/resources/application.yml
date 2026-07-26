@@ -1,0 +1,188 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: kb-file
+  profiles:
+    active: dev
+
+  # Nacos service registration & discovery
+  cloud:
+    nacos:
+      config:
+        namespace: knowledge
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        file-extension: yaml
+        group: KNOWLEDGE_BASE
+        enabled: true
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: knowledge
+        group: ${COMPUTER_ID:${USER:default}}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        ip: 127.0.0.1
+  config:
+    import: optional:nacos:kb-file-dev.yaml
+
+  # Data source configuration
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/kb_file?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${MYSQL_PASSWORD:123456}
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 30
+      max-wait: 60000
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      validation-query: SELECT 1
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      filters: stat,wall
+
+  # Redis configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 2
+      timeout: 10000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-wait: 3000ms
+          max-idle: 10
+          min-idle: 5
+          time-between-eviction-runs: 30s
+
+  # RabbitMQ configuration (async transcoding message queue)
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: /
+    listener:
+      simple:
+        concurrency: 1
+        max-concurrency: 2
+        acknowledge-mode: auto
+        prefetch: 1
+
+  # File upload configuration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 20MB
+      # Files larger than 2MB are written to a temp directory on disk to avoid OOM
+      file-size-threshold: 2MB
+      location: ${java.io.tmpdir}/kb-file-multipart
+
+# MyBatis Plus configuration
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.knowledge.base.file.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# File storage configuration - using the RustFS distributed file system
+file:
+  storage:
+    type: rustfs
+    rustfs:
+      # RustFS service endpoint address
+      endpoint: ${RUSTFS_ENDPOINT:localhost}
+      # Service port
+      port: 9091
+      # Access key ID
+      accessKey: ${RUSTFS_ACCESS_KEY:}
+      # Secret access key
+      secretKey: ${RUSTFS_SECRET_KEY:}
+      # Whether to use HTTPS
+      secure: false
+      # Default bucket name
+      bucketName: knowledge-dev
+      # Connection timeout (ms)
+      connectTimeout: 30000
+      # Read timeout (ms)
+      readTimeout: 60000
+      # Write timeout (ms)
+      writeTimeout: 60000
+      # Maximum number of connections
+      maxConnections: 50
+      # Whether to enable RustFS
+      enabled: true
+    ffmpeg:
+      path: /usr/bin/ffmpeg
+      ffprobe-path: /usr/bin/ffprobe
+      hls-segment-time: 10
+      thumbnail-time: 5
+    upload:
+      max-size: 20971520  # 20MB
+      allowed-types:
+        - pdf
+        - doc
+        - docx
+        - xls
+        - xlsx
+        - ppt
+        - pptx
+        - txt
+        - md
+        - png
+        - jpg
+        - jpeg
+        - gif
+        - bmp
+        - svg
+        - mp4
+        - avi
+        - mov
+        - wmv
+        - mkv
+        - webm
+        - flv
+        - mp3
+        - wav
+        - flac
+        - aac
+        - ogg
+      enable-fast-upload: true
+      calculate-hash: true
+      enable-resumable-upload: true
+    url:
+      prefix: http://localhost:8084/file
+      preview-prefix: http://localhost:8084/file/preview
+
+# Knife4j configuration
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  production: false
+
+# Logging configuration
+logging:
+  level:
+    com.knowledge.base: debug
+    org.springframework: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"

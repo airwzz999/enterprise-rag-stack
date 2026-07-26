@@ -1,0 +1,68 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: kb-graph
+  profiles:
+    active: dev
+
+  # Nacos service registration and discovery
+  cloud:
+    nacos:
+      config:
+        namespace: knowledge
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        file-extension: yaml
+        group: KNOWLEDGE_BASE
+        enabled: true
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: knowledge
+        group: ${COMPUTER_ID:${USER:default}}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        ip: 127.0.0.1
+  config:
+    import: optional:nacos:kb-graph-dev.yaml
+
+  # Neo4j configuration (KAG knowledge graph)
+  neo4j:
+    uri: ${NEO4J_URI:bolt://localhost:7687}
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:neo4j}
+
+  # Redis configuration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 2
+      timeout: 10000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-wait: 3000ms
+          max-idle: 10
+          min-idle: 5
+          time-between-eviction-runs: 30s
+
+# Knife4j configuration
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  production: false
+
+# Logging configuration
+logging:
+  level:
+    com.knowledge.base: debug
+    org.springframework: info
+    org.neo4j: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"

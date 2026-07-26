@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.knowledge.base.document.mapper.CategoryMapper">
+
+    <!-- Common result mapping -->
+    <resultMap id="BaseResultMap" type="com.knowledge.base.document.entity.Category">
+        <id column="id" property="id" />
+        <result column="parent_id" property="parentId" />
+        <result column="category_name" property="categoryName" />
+        <result column="category_code" property="categoryCode" />
+        <result column="description" property="description" />
+        <result column="category_icon" property="icon" />
+        <result column="sort" property="sort" />
+        <result column="status" property="status" />
+        <result column="document_count" property="documentCount" />
+        <result column="remark" property="remark" />
+        <result column="deleted" property="deleted" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+    </resultMap>
+
+    <!-- Common result columns -->
+    <sql id="Base_Column_List">
+        id, parent_id, category_name, category_code, description, category_icon, sort, status, document_count, remark,
+        deleted, created_at, updated_at, create_by, update_by
+    </sql>
+
+    <!-- Query subcategory list by parent category ID -->
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_category
+        WHERE parent_id = #{parentId}
+        AND deleted = 0
+        ORDER BY sort ASC, created_at DESC
+    </select>
+
+    <!-- Query category by category code -->
+    <select id="selectByCategoryCode" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_category
+        WHERE category_code = #{categoryCode}
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- Query category list by status -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_category
+        WHERE status = #{status}
+        AND deleted = 0
+        ORDER BY sort ASC
+    </select>
+
+    <!-- Query all root categories -->
+    <select id="selectRootCategories" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_category
+        WHERE parent_id = 0
+        AND deleted = 0
+        ORDER BY sort ASC
+    </select>
+
+    <!-- Update document count -->
+    <update id="updateDocumentCount">
+        UPDATE kb_category
+        SET document_count = #{count}
+        WHERE id = #{categoryId}
+        AND deleted = 0
+    </update>
+
+    <!-- Increment document count -->
+    <update id="incrementDocumentCount">
+        UPDATE kb_category
+        SET document_count = document_count + 1
+        WHERE id = #{categoryId}
+        AND deleted = 0
+    </update>
+
+    <!-- Decrement document count -->
+    <update id="decrementDocumentCount">
+        UPDATE kb_category
+        SET document_count = GREATEST(document_count - 1, 0)
+        WHERE id = #{categoryId}
+        AND deleted = 0
+    </update>
+
+    <!-- Check whether the category code already exists -->
+    <select id="checkCategoryCodeExists" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM kb_category
+        WHERE category_code = #{categoryCode}
+        AND deleted = 0
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+</mapper>

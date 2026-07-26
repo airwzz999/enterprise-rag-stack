@@ -1,0 +1,103 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: kb-search
+  profiles:
+    active: dev
+
+  # Data source configuration
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/kb_search?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: ${MYSQL_PASSWORD:123456}
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      initial-size: 5
+      min-idle: 5
+      max-active: 30
+      max-wait: 60000
+
+  # Nacos service registration and discovery
+  cloud:
+    nacos:
+      config:
+        namespace: knowledge
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        file-extension: yaml
+        group: KNOWLEDGE_BASE
+        enabled: true
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
+        namespace: knowledge
+        group: ${COMPUTER_ID:${USER:default}}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        ip: 127.0.0.1
+  config:
+    import: optional:nacos:kb-search-dev.yaml
+
+  # Redis configuration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 2
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000ms
+
+  # Elasticsearch configuration
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    host: ${ELASTICSEARCH_HOST:localhost}
+    port: 9200
+    username: ${ELASTICSEARCH_USERNAME:elastic}
+    password: ${ELASTICSEARCH_PASSWORD:}
+
+# MyBatis Plus configuration
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.knowledge.base.document.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# kb-ai service configuration (hybrid search calls)
+kb-ai:
+  base-url: http://localhost:8086
+
+# kb-document service configuration (document index synchronization)
+kb-document:
+  base-url: http://localhost:8082
+
+# Knife4j configuration
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  production: false
+
+# Logging configuration
+logging:
+  level:
+    com.knowledge.base: debug
+    org.springframework: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"

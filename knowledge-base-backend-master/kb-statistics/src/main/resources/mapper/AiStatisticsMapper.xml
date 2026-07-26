@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.knowledge.base.statistics.mapper.AiStatisticsMapper">
+
+    <!-- Count total AI conversations (excluding deleted ones) -->
+    <select id="countConversations" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kb_ai_conversation
+        WHERE deleted = 0
+    </select>
+
+    <!-- Count total AI user questions (only messages with role='user' that are not deleted) -->
+    <select id="countUserMessages" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kb_ai_message
+        WHERE role = 'user'
+          AND deleted = 0
+    </select>
+
+</mapper>

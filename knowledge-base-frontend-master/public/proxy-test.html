@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxy Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Vite Proxy Test Page</h1>
+
+    <div class="test-section">
+        <h2>Environment Info</h2>
+        <div id="envInfo" class="result info">Loading...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 1: Check the Current URL</h2>
+        <button onclick="testCurrentURL()">Show Current URL</button>
+        <div id="urlResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Access the Backend API via the Proxy</h2>
+        <button onclick="testProxyAPI()">Test Proxied Request</button>
+        <div id="proxyResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Access the Backend Directly (Will Fail)</h2>
+        <button onclick="testDirectAPI()">Test Direct Request (CORS)</button>
+        <div id="directResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 How the Proxy Works</h2>
+        <div class="result info">
+Browser request: http://localhost:3002/api/auth/auth/login
+         ↓ (Vite proxy)
+Actual request to: http://localhost:8080/api/auth/auth/login
+         ↓ (backend processing)
+Returned to browser: response data
+
+This way the browser thinks the request is same-origin (both are localhost:3002),
+but the backend is actually being handled at localhost:8080.
+        </div>
+    </div>
+
+    <script>
+        // Show environment info
+        document.getElementById('envInfo').textContent = `
+Current page URL: ${window.location.href}
+Frontend port: 3002
+Backend port: 8080
+Proxy path: /api -> http://localhost:8080/api
+        `;
+
+        function testCurrentURL() {
+            const result = document.getElementById('urlResult');
+            result.textContent = `Current page URL: ${window.location.href}\nProtocol: ${window.location.protocol}\nHost: ${window.location.host}\nPort: ${window.location.port || 'default'}`;
+            result.className = 'result info';
+        }
+
+        async function testProxyAPI() {
+            const result = document.getElementById('proxyResult');
+            result.textContent = 'Testing proxied request...';
+            result.className = 'result info';
+
+            try {
+                // This request will be proxied by Vite to http://localhost:8080/api/auth/auth/login
+                const response = await fetch('/api/auth/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'test',
+                        password: 'test'
+                    })
+                });
+
+                result.textContent = `✅ Proxied request succeeded!
+Status code: ${response.status}
+Status text: ${response.statusText}
+
+This proves the proxy is working correctly:
+URL the browser sees: ${window.location.origin}/api/auth/auth/login
+Backend actually requested: http://localhost:8080/api/auth/auth/login`;
+                result.className = 'result success';
+            } catch (error) {
+                result.textContent = `❌ Proxied request failed!
+Error: ${error.message}
+
+Possible causes:
+1. The backend server isn't running (check http://localhost:8080)
+2. The proxy configuration is wrong
+3. A network connectivity issue`;
+                result.className = 'result error';
+            }
+        }
+
+        async function testDirectAPI() {
+            const result = document.getElementById('directResult');
+            result.textContent = 'Testing a direct request to the backend...';
+            result.className = 'result info';
+
+            try {
+                // Request the backend directly; this should fail due to CORS
+                const response = await fetch('http://localhost:8080/api/auth/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'test',
+                        password: 'test'
+                    })
+                });
+
+                result.textContent = `✅ Direct request succeeded (unexpected!)
+
+If you see this message, it means the backend has CORS configured to allow cross-origin requests.
+Status code: ${response.status}`;
+                result.className = 'result success';
+            } catch (error) {
+                result.textContent = `❌ Direct request failed (expected)
+
+Error: ${error.message}
+
+This is normal! The browser's same-origin policy blocks direct access to a backend on a different port.
+This is exactly why a proxy is needed.`;
+                result.className = 'result error';
+            }
+        }
+
+        // Automatically run the first test
+        testCurrentURL();
+    </script>
+</body>
+</html>

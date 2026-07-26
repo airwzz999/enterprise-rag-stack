@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Debug Page</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h3 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.danger {
+            background: #f44336;
+        }
+        button.danger:hover {
+            background: #da190b;
+        }
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .success { color: #4CAF50; font-weight: bold; }
+        .error { color: #f44336; font-weight: bold; }
+        .warning { color: #ff9800; font-weight: bold; }
+        .info { color: #2196F3; font-weight: bold; }
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .step-num {
+            background: #2196F3;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Token Debug Page</h1>
+    <p>A complete debugging tool for token management</p>
+
+    <!-- Step 1: test login -->
+    <div class="section">
+        <h3>Step 1: Test Login</h3>
+        <div class="step">
+            <div class="step-num">1</div>
+            <div>
+                <input type="text" id="username" placeholder="Username" value="admin">
+                <input type="password" id="password" placeholder="Password" value="123456">
+                <button onclick="testLogin()">Log In</button>
+            </div>
+        </div>
+        <pre id="loginResult">Waiting for action...</pre>
+    </div>
+
+    <!-- Step 2: check the Cookie -->
+    <div class="section">
+        <h3>Step 2: Check Cookie</h3>
+        <div class="step">
+            <div class="step-num">2</div>
+            <button onclick="checkCookie()">Check Cookie</button>
+        </div>
+        <pre id="cookieResult">Waiting to check...</pre>
+    </div>
+
+    <!-- Step 3: manually set the Token -->
+    <div class="section">
+        <h3>Step 3: Manually Set the Token in a Cookie</h3>
+        <div class="step">
+            <div class="step-num">3</div>
+            <input type="text" id="tokenInput" placeholder="Paste Token" style="width: 500px;">
+            <button onclick="setToken()">Set Token</button>
+        </div>
+        <pre id="setTokenResult">Waiting for action...</pre>
+    </div>
+
+    <!-- Step 4: test Token retrieval -->
+    <div class="section">
+        <h3>Step 4: Test Token Retrieval Logic</h3>
+        <div class="step">
+            <div class="step-num">4</div>
+            <button onclick="testTokenRetrieval()">Test Token Retrieval</button>
+        </div>
+        <pre id="tokenRetrievalResult">Waiting to test...</pre>
+    </div>
+
+    <!-- Step 5: test the /me endpoint -->
+    <div class="section">
+        <h3>Step 5: Test the /me Endpoint</h3>
+        <div class="step">
+            <div class="step-num">5</div>
+            <button onclick="testMeApi()">Call the /me Endpoint</button>
+        </div>
+        <pre id="meApiResult">Waiting to call...</pre>
+    </div>
+
+    <!-- Step 6: clear everything -->
+    <div class="section">
+        <h3>Step 6: Clear All Data</h3>
+        <div class="step">
+            <div class="step-num">6</div>
+            <button onclick="clearAll()" class="danger">Clear All Data</button>
+        </div>
+        <pre id="clearResult">Waiting to clear...</pre>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        // Test login
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultEl = document.getElementById('loginResult');
+
+            try {
+                resultEl.innerHTML = '<span class="info">⏳ Logging in...</span>';
+
+                const response = await fetch(`${API_BASE}/auth/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'omit', // don't automatically send cookies
+                });
+
+                const data = await response.json();
+
+                resultEl.innerHTML = `<span class="info">📤 Login response:</span>
+${JSON.stringify(data, null, 2)}`;
+
+                if (data.code === 200 && data.data) {
+                    resultEl.innerHTML += `\n\n<span class="success">✅ Login successful!</span>
+<span class="info">📝 accessToken length:</span> ${data.data.accessToken.length}
+<span class="info">📝 refreshToken length:</span> ${data.data.refreshToken.length}`;
+
+                    // Automatically save the Token to a Cookie
+                    const expiresIn = data.data.expiresIn || 7200;
+                    setCookie('access_token', data.data.accessToken, expiresIn);
+                    setCookie('refresh_token', data.data.refreshToken, expiresIn);
+
+                    resultEl.innerHTML += `\n\n<span class="success">✅ Token automatically saved to Cookie</span>`;
+                } else {
+                    resultEl.innerHTML += `\n\n<span class="error">❌ Login failed: ${data.message}</span>`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">❌ Request failed: ${error.message}</span>`;
+            }
+        }
+
+        // Check the Cookie
+        function checkCookie() {
+            const resultEl = document.getElementById('cookieResult');
+            const cookies = document.cookie.split(';').map(c => c.trim());
+
+            resultEl.innerHTML = `<span class="info">🍪 Current cookies (${cookies.length}):</span>
+${cookies.map(c => `  - ${c.substring(0, 100)}${c.length > 100 ? '...' : ''}`).join('\n')}
+
+<span class="info">🔍 access_token present:</span> ${cookies.some(c => c.startsWith('access_token=')) ? '✅ Yes' : '❌ No'}
+<span class="info">🔍 refresh_token present:</span> ${cookies.some(c => c.startsWith('refresh_token=')) ? '✅ Yes' : '❌ No'}
+<span class="info">🔍 session present:</span> ${cookies.some(c => c.startsWith('session=')) ? '✅ Yes' : '❌ No'}`;
+        }
+
+        // Manually set the Token
+        function setToken() {
+            const token = document.getElementById('tokenInput').value;
+            const resultEl = document.getElementById('setTokenResult');
+
+            if (!token) {
+                resultEl.innerHTML = '<span class="error">❌ Please enter a Token</span>';
+                return;
+            }
+
+            setCookie('access_token', token, 7200);
+            resultEl.innerHTML = `<span class="success">✅ Token saved to Cookie</span>
+<span class="info">Length:</span> ${token.length}
+<span class="info">First 50 characters:</span> ${token.substring(0, 50)}...`;
+        }
+
+        // Test Token retrieval
+        function testTokenRetrieval() {
+            const resultEl = document.getElementById('tokenRetrievalResult');
+            const tokenFromCookie = getCookie('access_token');
+
+            resultEl.innerHTML = `<span class="info">🔍 Token retrieval test:</span>
+
+            if (tokenFromCookie) {
+                resultEl.innerHTML += `
+<span class="success">✅ Retrieved Token from Cookie</span>
+<span class="info">Length:</span> ${tokenFromCookie.length}
+<span class="info">First 50 characters:</span> ${tokenFromCookie.substring(0, 50)}...
+<span class="info">Full Token:</span> ${tokenFromCookie}`;
+            } else {
+                resultEl.innerHTML += `<span class="error">❌ access_token not found in Cookie</span>
+
+<span class="warning">⚠️ Current Cookie:</span> ${document.cookie || '(empty)'}`;
+            }
+        }
+
+        // Test the /me endpoint
+        async function testMeApi() {
+            const resultEl = document.getElementById('meApiResult');
+            const token = getCookie('access_token');
+
+            if (!token) {
+                resultEl.innerHTML = `<span class="error">❌ No Token in Cookie, please log in first</span>`;
+                return;
+            }
+
+            try {
+                resultEl.innerHTML = `<span class="info">⏳ Calling /api/auth/auth/me...</span>
+<span class="info">Authorization:</span> Bearer ${token.substring(0, 30)}...
+`;
+
+                const response = await fetch(`${API_BASE}/auth/auth/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'omit', // don't automatically send cookies
+                });
+
+                const data = await response.json();
+
+                if (data.code === 200) {
+                    resultEl.innerHTML = `<span class="success">✅ Call succeeded!</span>
+<span class="info">User info:</span>
+${JSON.stringify(data.data, null, 2)}`;
+                } else {
+                    resultEl.innerHTML = `<span class="error">❌ Call failed: ${data.message}</span>
+<span class="info">Response:</span>
+${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<span class="error">❌ Request failed: ${error.message}</span>`;
+            }
+        }
+
+        // Clear everything
+        function clearAll() {
+            const resultEl = document.getElementById('clearResult');
+
+            // Clear LocalStorage
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Clear all cookies
+            const cookies = document.cookie.split(';');
+            cookies.forEach(cookie => {
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            });
+
+            resultEl.innerHTML = `<span class="success">✅ All data cleared</span>
+<span class="info">LocalStorage:</span> cleared
+<span class="info">SessionStorage:</span> cleared
+<span class="info">Cookie:</span> cleared`;
+        }
+
+        // Helper functions
+        function setCookie(name, value, maxAge) {
+            document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            console.log(`✅ Cookie set: ${name}=${value.substring(0, 30)}...`);
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Check the Cookie when the page loads
+        window.onload = function() {
+            checkCookie();
+        };
+    </script>
+</body>
+</html>

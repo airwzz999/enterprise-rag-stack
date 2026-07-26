@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.knowledge.base.userauth.mapper.TeamMapper">
+
+    <!-- Common query result mapping -->
+    <resultMap id="BaseResultMap" type="com.knowledge.base.userauth.entity.Team">
+        <id column="id" property="id" />
+        <result column="team_name" property="teamName" />
+        <result column="team_code" property="teamCode" />
+        <result column="description" property="description" />
+        <result column="parent_id" property="parentId" />
+        <result column="level" property="level" />
+        <result column="path" property="path" />
+        <result column="member_count" property="memberCount" />
+        <result column="doc_count" property="docCount" />
+        <result column="leader_id" property="leaderId" />
+        <result column="status" property="status" />
+        <result column="deleted" property="deleted" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+    </resultMap>
+
+    <!-- Common query result columns -->
+    <sql id="Base_Column_List">
+        id, team_name, team_code, description, parent_id, level, path, member_count, doc_count, leader_id, status,
+        deleted, created_at, updated_at, create_by, update_by
+    </sql>
+
+    <!-- Query child teams by parent team ID -->
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE parent_id = #{parentId}
+        AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- Query a team by its code -->
+    <select id="selectByTeamCode" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE team_code = #{teamCode}
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- Query teams by status -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE status = #{status}
+        AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- Query teams by level -->
+    <select id="selectByLevel" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE level = #{level}
+        AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- Query all root teams -->
+    <select id="selectRootTeams" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE parent_id = 0
+        AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- Query teams by leader ID -->
+    <select id="selectByLeaderId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE leader_id = #{leaderId}
+        AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- Query teams by path prefix (returns all descendant teams) -->
+    <select id="selectByPathPrefix" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE path LIKE CONCAT(#{path}, '%')
+        AND deleted = 0
+        ORDER BY level ASC, id ASC
+    </select>
+
+    <!-- Query the team tree -->
+    <select id="selectTeamTree" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_team
+        WHERE deleted = 0
+        ORDER BY level ASC, id ASC
+    </select>
+
+    <!-- Update member count -->
+    <update id="updateMemberCount">
+        UPDATE kb_team
+        SET member_count = #{count}
+        WHERE id = #{teamId}
+        AND deleted = 0
+    </update>
+
+    <!-- Increment member count -->
+    <update id="incrementMemberCount">
+        UPDATE kb_team
+        SET member_count = member_count + 1
+        WHERE id = #{teamId}
+        AND deleted = 0
+    </update>
+
+    <!-- Decrement member count -->
+    <update id="decrementMemberCount">
+        UPDATE kb_team
+        SET member_count = GREATEST(member_count - 1, 0)
+        WHERE id = #{teamId}
+        AND deleted = 0
+    </update>
+
+    <!-- Update document count -->
+    <update id="updateDocumentCount">
+        UPDATE kb_team
+        SET doc_count = #{count}
+        WHERE id = #{teamId}
+        AND deleted = 0
+    </update>
+
+    <!-- Increment document count -->
+    <update id="incrementDocumentCount">
+        UPDATE kb_team
+        SET doc_count = doc_count + 1
+        WHERE id = #{teamId}
+        AND deleted = 0
+    </update>
+
+    <!-- Decrement document count -->
+    <update id="decrementDocumentCount">
+        UPDATE kb_team
+        SET doc_count = GREATEST(doc_count - 1, 0)
+        WHERE id = #{teamId}
+        AND deleted = 0
+    </update>
+
+    <!-- Check whether a team code already exists -->
+    <select id="checkTeamCodeExists" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM kb_team
+        WHERE team_code = #{teamCode}
+        AND deleted = 0
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+    <!-- Count all teams -->
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kb_team
+        WHERE deleted = 0
+    </select>
+
+    <!-- Count enabled teams -->
+    <select id="countEnabled" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kb_team
+        WHERE status = 1
+        AND deleted = 0
+    </select>
+
+</mapper>

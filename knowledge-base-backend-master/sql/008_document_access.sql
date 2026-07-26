@@ -1,0 +1,21 @@
+CREATE TABLE `kb_document_access` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT 'Access record ID',
+  `user_id` BIGINT NOT NULL COMMENT 'User ID',
+  `document_id` BIGINT NOT NULL COMMENT 'Document ID',
+  `document_title` VARCHAR(200) NOT NULL COMMENT 'Document title',
+  `category_id` BIGINT DEFAULT NULL COMMENT 'Category ID',
+  `category_name` VARCHAR(100) DEFAULT NULL COMMENT 'Category name',
+  `access_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Access time',
+  `ip_address` VARCHAR(50) DEFAULT NULL COMMENT 'Access IP address',
+  `user_agent` VARCHAR(500) DEFAULT NULL COMMENT 'User agent',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created at',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Updated at',
+  `created_by` BIGINT DEFAULT NULL COMMENT 'Creator ID',
+  `updated_by` BIGINT DEFAULT NULL COMMENT 'Updater ID',
+  `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT 'Deletion flag',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_user_document` (`user_id`, `document_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_access_time` (`access_time`),
+  KEY `idx_document_id` (`document_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Document access record table';

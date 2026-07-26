@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.knowledge.base.userauth.mapper.RoleMapper">
+
+    <!-- Common query result mapping -->
+    <resultMap id="BaseResultMap" type="com.knowledge.base.userauth.entity.Role">
+        <id column="id" property="id" />
+        <result column="role_name" property="roleName" />
+        <result column="role_code" property="roleCode" />
+        <result column="description" property="description" />
+        <result column="sort" property="sort" />
+        <result column="status" property="status" />
+        <result column="remark" property="remark" />
+        <result column="deleted" property="deleted" />
+        <result column="version" property="version" />
+        <result column="created_at" property="createdAt" />
+        <result column="updated_at" property="updatedAt" />
+        <result column="create_by" property="createBy" />
+        <result column="update_by" property="updateBy" />
+    </resultMap>
+
+    <!-- Common query result columns -->
+    <sql id="Base_Column_List">
+        id, role_name, role_code, description, sort, status, remark,
+        deleted, version, created_at, updated_at, create_by, update_by
+    </sql>
+
+    <!-- Query a role by its code -->
+    <select id="selectByRoleCode" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_role
+        WHERE role_code = #{roleCode}
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- Query roles by status -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_role
+        WHERE status = #{status}
+        AND deleted = 0
+        ORDER BY sort ASC
+    </select>
+
+    <!-- Query roles by user ID -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT DISTINCT r.*
+        FROM kb_role r
+        INNER JOIN kb_user_role ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND r.deleted = 0
+        ORDER BY r.sort ASC
+    </select>
+
+    <!-- Query roles by permission ID -->
+    <select id="selectByPermissionId" resultMap="BaseResultMap">
+        SELECT DISTINCT r.*
+        FROM kb_role r
+        INNER JOIN kb_role_permission rp ON r.id = rp.role_id
+        WHERE rp.permission_id = #{permissionId}
+        AND r.deleted = 0
+        ORDER BY r.sort ASC
+    </select>
+
+    <!-- Query all enabled roles -->
+    <select id="selectAllEnabled" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM kb_role
+        WHERE status = 1
+        AND deleted = 0
+        ORDER BY sort ASC
+    </select>
+
+    <!-- Check whether a role code already exists -->
+    <select id="checkRoleCodeExists" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM kb_role
+        WHERE role_code = #{roleCode}
+        AND deleted = 0
+        <if test="id != null">
+            AND id != #{id}
+        </if>
+    </select>
+
+    <!-- Query permission IDs by role ID -->
+    <select id="selectPermissionIdsByRoleId" resultType="java.lang.Long">
+        SELECT permission_id
+        FROM kb_role_permission
+        WHERE role_id = #{roleId}
+    </select>
+
+    <!-- Query permission IDs by user ID -->
+    <select id="selectPermissionIdsByUserId" resultType="java.lang.Long">
+        SELECT DISTINCT rp.permission_id
+        FROM kb_role_permission rp
+        INNER JOIN kb_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+    </select>
+
+    <!-- Count all roles -->
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kb_role
+        WHERE deleted = 0
+    </select>
+
+    <!-- Count enabled roles -->
+    <select id="countEnabled" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM kb_role
+        WHERE status = 1
+        AND deleted = 0
+    </select>
+
+    <!-- Query role codes by user ID -->
+    <select id="selectRoleCodesByUserId" resultType="java.lang.String">
+        SELECT r.role_code
+        FROM kb_role r
+        INNER JOIN kb_user_role ur ON r.id = ur.role_id
+        WHERE ur.user_id = #{userId}
+        AND r.deleted = 0
+    </select>
+
+    <!-- Query user IDs by role code -->
+    <select id="selectUserIdsByRoleCode" resultType="java.lang.Long">
+        SELECT DISTINCT ur.user_id
+        FROM kb_user_role ur
+        INNER JOIN kb_role r ON ur.role_id = r.id
+        WHERE r.role_code = #{roleCode}
+        AND r.deleted = 0
+    </select>
+
+</mapper>
