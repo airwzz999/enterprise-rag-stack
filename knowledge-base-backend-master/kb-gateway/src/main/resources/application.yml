@@ -47,10 +47,13 @@ spring:
           acquire-timeout: 120000
 
       # Global CORS configuration
+      # allowCredentials: true requires an explicit origin allow-list (wildcard
+      # origins + credentials would let any site ride an authenticated session).
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOriginPatterns: "*"
+            allowedOrigins:
+              - ${APP_FRONTEND_URL:http://localhost:5173}
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
@@ -155,17 +158,20 @@ logging:
 
 # Gateway configuration
 gateway:
-  # Whitelist (paths that do not require authentication)
+  # Whitelist (paths that do not require authentication).
+  # This is the single source of truth read by AuthGlobalFilter - keep it in sync
+  # with the actual public surface; do not assume a path is protected just because
+  # it's absent from a route predicate above.
   white-list:
     - /api/auth/auth/login
     - /api/auth/auth/register
     - /api/auth/auth/refresh
     - /api/document/share/**
-    - /api/files/**
-    - /api/ai/**
     - /api/config/public
     - /api/notifications/templates
     - /ws/**
+    - /actuator/**
     - /doc.html
-    - /swagger-resources
-    - /v3/api-docs
+    - /swagger-resources/**
+    - /v3/api-docs/**
+    - /webjars/**

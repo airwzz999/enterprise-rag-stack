@@ -1,5 +1,6 @@
 package com.knowledge.base.common.utils;
 
+import com.knowledge.base.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -149,7 +150,10 @@ public class UserContextUtil {
      * <p>Prefers reading the logged-in user from ThreadLocal, falling back to parsing the request header</p>
      *
      * @param request the HttpServletRequest
-     * @return the user ID, or 1L (default user) if not found
+     * @return the user ID
+     * @throws UnauthorizedException if no user context is present. This must fail closed: silently
+     *         defaulting to a fixed user ID here would let any request lacking the header (e.g. one
+     *         that reached this service directly, bypassing the gateway) act as that user.
      */
     public static Long getUserIdFromHeader(HttpServletRequest request) {
         Long threadLocalUserId = getUserId();
@@ -157,9 +161,13 @@ public class UserContextUtil {
             return threadLocalUserId;
         }
         String userId = request.getHeader("X-User-Id");
-        if (userId != null) {
-            return Long.parseLong(userId);
+        if (userId == null || userId.isBlank()) {
+            throw new UnauthorizedException();
         }
-        return 1L;
+        try {
+            return Long.parseLong(userId);
+        } catch (NumberFormatException e) {
+            throw new UnauthorizedException();
+        }
     }
 }

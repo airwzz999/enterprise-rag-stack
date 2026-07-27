@@ -1,9 +1,9 @@
-package com.knowledge.base.foundation.filter;
+package com.knowledge.base.search.filter;
 
 import com.knowledge.base.common.result.Result;
 import com.knowledge.base.common.utils.UserContextUtil;
-import com.knowledge.base.foundation.dto.TokenValidateVO;
-import com.knowledge.base.foundation.feign.UserAuthFeignClient;
+import com.knowledge.base.search.dto.TokenValidateVO;
+import com.knowledge.base.search.feign.UserAuthFeignClient;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,25 +25,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * JWT authentication filter (dedicated to the foundation service)
+ * JWT authentication filter (dedicated to the search service)
  *
- * <p>Delegates JWT token validation to the kb-user-auth microservice (via a Feign
- * call), centralizing the authentication logic and avoiding duplicate JWT parsing
- * and role lookups across microservices.</p>
- *
- * <p>Authentication flow:</p>
- * <ol>
- *   <li>Extract the Bearer token from the request header</li>
- *   <li>Validate the token via a Feign call to kb-user-auth's /auth/validate</li>
- *   <li>kb-user-auth is responsible for: JWT parsing, blacklist checks, user info lookup, role lookup</li>
- *   <li>This filter sets the Spring Security context and ThreadLocal based on the returned result</li>
- * </ol>
- *
- * <p>Relationship with WebSocket authentication:</p>
- * <ul>
- *   <li>REST API requests → handled by this filter (Feign call to kb-user-auth to validate the token)</li>
- *   <li>WebSocket /ws/** → bypasses this filter (validated at the STOMP layer by WebSocketAuthInterceptor)</li>
- * </ul>
+ * <p>Delegates JWT token validation to the kb-user-auth microservice via Feign, rather
+ * than trusting the gateway-injected X-User-Id header alone. Previously this service
+ * had no filter at all (Spring Security config was anyRequest().permitAll()) and every
+ * controller read X-User-Id directly - a request that reached kb-search without going
+ * through the gateway (or one that simply forged the header) was authenticated as
+ * whatever user ID it claimed, with zero verification.</p>
  *
  * @author airwzz999
  * @since 1.0.0
@@ -73,9 +62,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (tokenPresented) {
             try {
-                // === Validate the token via a Feign call to kb-user-auth ===
-                Result<TokenValidateVO> result = userAuthFeignClient
-                        .validateToken(bearerToken, null);
+                Result<TokenValidateVO> result = userAuthFeignClient.validateToken(bearerToken, null);
                 TokenValidateVO validateVO = result != null ? result.getData() : null;
 
                 if (validateVO != null && Boolean.TRUE.equals(validateVO.getValid())) {
@@ -84,7 +71,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     setSecurityContext(validateVO, bearerToken, request);
                     UserContextUtil.setUserId(validateVO.getUserId());
-
                     if (validateVO.getUsername() != null) {
                         UserContextUtil.setUsername(validateVO.getUsername());
                     }
@@ -105,10 +91,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Fallback: trust the X-User-Id header set by the gateway, but only when the
         // client presented no bearer token at all. A presented token that kb-user-auth
-        // explicitly rejected (expired/blacklisted/invalid) or that errored during
-        // validation must NOT fall through to the header - kb-user-auth's verdict is
-        // authoritative, and honoring the header instead would let an expired or
-        // logged-out (blacklisted) token keep authenticating via the gateway's header.
+        // explicitly rejected or that errored during validation must NOT fall through
+        // to the header - kb-user-auth's verdict is authoritative.
         if (!authenticated && !tokenRejected) {
             String userIdHeader = request.getHeader("X-User-Id");
             if (userIdHeader != null && !userIdHeader.isEmpty()) {
@@ -116,10 +100,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Long userId = Long.parseLong(userIdHeader);
                     log.debug("Authenticating via the X-User-Id header: userId={}, uri={}", userId, requestUri);
                     UserContextUtil.setUserId(userId);
-                    if (bearerToken != null) {
-                        UserContextUtil.setToken(bearerToken);
-                    }
-                    // Requests authenticated via the X-User-Id header are granted the default ROLE_USER
                     setDefaultSecurityContext(userId, bearerToken, request);
                 } catch (NumberFormatException e) {
                     log.warn("Invalid X-User-Id header format: {}", userIdHeader);
@@ -134,53 +114,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    /**
-     * Set the Spring Security context based on the token validation result returned by Feign
-     */
-    private void setSecurityContext(TokenValidateVO validateVO, String token,
-                                     HttpServletRequest request) {
+    private void setSecurityContext(TokenValidateVO validateVO, String token, HttpServletRequest request) {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         List<String> roles = validateVO.getRoles();
         if (roles != null) {
             for (String role : roles) {
-                // Spring Security requires roles to start with ROLE_
                 String roleWithPrefix = role.startsWith("ROLE_") ? role : "ROLE_" + role;
                 authorities.add(new SimpleGrantedAuthority(roleWithPrefix));
             }
         }
-        // Fallback: ensure there is at least one role
         if (authorities.isEmpty()) {
             authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
 
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        validateVO.getUserId(), token, authorities);
-        authentication.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(request));
+                new UsernamePasswordAuthenticationToken(validateVO.getUserId(), token, authorities);
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    /**
-     * Set the default Security context (used for the X-User-Id header fallback scenario)
-     */
-    private void setDefaultSecurityContext(Long userId, String token,
-                                            HttpServletRequest request) {
+    private void setDefaultSecurityContext(Long userId, String token, HttpServletRequest request) {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userId, token,
-                        Collections.singletonList(
-                                new SimpleGrantedAuthority("ROLE_USER")));
-        authentication.setDetails(
-                new WebAuthenticationDetailsSource().buildDetails(request));
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    /**
-     * Skip paths that do not require authentication
-     *
-     * <p>Excluded paths are configured via {@code security.jwt.exclude-paths},
-     * supporting Ant-style path matching.</p>
-     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         if ("OPTIONS".equals(request.getMethod())) {
