@@ -3,6 +3,7 @@ package com.knowledge.base.file.controller;
 import com.knowledge.base.common.annotation.OperationLog;
 import com.knowledge.base.common.result.PageResult;
 import com.knowledge.base.common.result.Result;
+import com.knowledge.base.common.utils.UserContextUtil;
 import com.knowledge.base.file.dto.FileQueryDTO;
 import com.knowledge.base.file.dto.FileUploadDTO;
 import com.knowledge.base.file.service.FileService;
@@ -11,6 +12,7 @@ import com.knowledge.base.file.vo.FileInfoVO;
 import com.knowledge.base.file.vo.UrlConvertResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +45,11 @@ public class FileController {
     @OperationLog(module = "File Management", operation = "Upload File", description = "Upload file")
     public Result<FileInfoVO> uploadFile(
             @RequestPart("file") MultipartFile file,
-            FileUploadDTO dto) {
+            FileUploadDTO dto,
+            HttpServletRequest request) {
+        // The uploader must be the authenticated caller, never a client-supplied value -
+        // otherwise any caller could attribute an upload to an arbitrary user ID.
+        dto.setUploaderId(UserContextUtil.getUserIdFromHeader(request));
         FileInfoVO fileInfo = fileService.uploadFile(file, dto);
         return Result.success(fileInfo);
     }
@@ -56,7 +62,9 @@ public class FileController {
     @OperationLog(module = "File Management", operation = "Batch Upload", description = "Batch upload files")
     public Result<List<FileInfoVO>> uploadFiles(
             @RequestPart("files") MultipartFile[] files,
-            FileUploadDTO dto) {
+            FileUploadDTO dto,
+            HttpServletRequest request) {
+        dto.setUploaderId(UserContextUtil.getUserIdFromHeader(request));
         List<FileInfoVO> fileInfos = fileService.uploadFiles(files, dto);
         return Result.success(fileInfos);
     }

@@ -38,7 +38,6 @@ import java.util.List;
  *   <li>Parse the JWT token from the request header and verify the user's identity</li>
  *   <li>Set the user information into the Spring Security context</li>
  *   <li>Set the user information into the ThreadLocal context for later use by business logic</li>
- *   <li>Support both real JWT tokens and mock tokens (for development/testing)</li>
  *   <li>Clear the context after the request completes to prevent memory leaks</li>
  * </ul>
  *
@@ -273,27 +272,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     /**
      * Parse the token to get the user information
      *
-     * <p>Supports two token formats:</p>
-     * <ol>
-     *   <li>Real JWT token: parsed using JwtTokenUtil</li>
-     *   <li>Mock token: used for development/testing, in the format mock-access-token-{userId}</li>
-     * </ol>
-     *
      * @param token JWT token
      * @return user information, or null if parsing fails
      */
     private UserInfo parseToken(String token) {
-        // First try to parse as a real JWT token
         if (jwtTokenUtil.validateToken(token)) {
             Long userId = jwtTokenUtil.getUserIdFromToken(token);
             if (userId != null) {
                 return loadUserInfo(userId);
             }
-        }
-
-        // Development environment: support mock tokens
-        if (token.startsWith("mock-access-token-")) {
-            return parseMockToken(token);
         }
 
         return null;
@@ -320,23 +307,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         } catch (Exception e) {
             log.error("Failed to query user information: userId={}", userId, e);
-        }
-        return null;
-    }
-
-    /**
-     * Parse a mock token (for development/testing)
-     *
-     * @param token mock token
-     * @return user information
-     */
-    private UserInfo parseMockToken(String token) {
-        try {
-            String userIdStr = token.substring("mock-access-token-".length());
-            Long userId = Long.parseLong(userIdStr);
-            return loadUserInfo(userId);
-        } catch (NumberFormatException e) {
-            log.error("Failed to parse mock token: {}", e.getMessage());
         }
         return null;
     }

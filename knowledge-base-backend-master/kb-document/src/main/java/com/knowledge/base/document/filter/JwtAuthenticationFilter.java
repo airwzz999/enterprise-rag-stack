@@ -79,6 +79,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.info("JwtAuthenticationFilter processing request: uri={}, method={}, hasToken={}", requestUri, method, token != null);
 
         boolean authenticated = false;
+        boolean tokenRejected = false;
 
         if (token != null) {
             try {
@@ -101,16 +102,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authenticated = true;
                 } else {
                     log.warn("JWT token is invalid or expired: uri={}, method={}", requestUri, method);
+                    tokenRejected = true;
                 }
             } catch (Exception e) {
                 log.error("JWT authentication exception: uri={}, method={}, error={}", requestUri, method, e.getMessage(), e);
+                tokenRejected = true;
             }
         } else {
             log.warn("Request did not include a token: uri={}, method={}", requestUri, method);
         }
 
-        // Fallback: X-User-Id header (set by gateway after JWT validation)
-        if (!authenticated) {
+        // Fallback: X-User-Id header (set by gateway after JWT validation). A presented
+        // token that was explicitly rejected (invalid/expired/tampered) must NOT fall
+        // through to the header - otherwise a forged X-User-Id alongside a garbage
+        // token would authenticate as an arbitrary user.
+        if (!authenticated && !tokenRejected) {
             String userIdHeader = request.getHeader("X-User-Id");
             if (userIdHeader != null) {
                 try {

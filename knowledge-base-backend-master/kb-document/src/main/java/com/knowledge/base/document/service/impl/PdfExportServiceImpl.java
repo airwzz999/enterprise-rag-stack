@@ -911,21 +911,24 @@ public class PdfExportServiceImpl implements PdfExportService {
 
     /**
      * Downloads the image byte array from a URL
+     *
+     * <p>Only http(s) URLs are supported. Document content (and therefore image URLs) is
+     * user-authored, so treating a non-http value as a local filesystem path would let an
+     * attacker embed something like {@code ![x](/etc/passwd)} in a document and have this
+     * service read arbitrary local files into the exported PDF.</p>
      */
     private byte[] downloadImage(String imageUrl) {
         if (imageUrl == null || imageUrl.isEmpty()) {
             return null;
         }
 
+        if (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://")) {
+            log.warn("Ignoring non-http(s) image URL: url={}", imageUrl);
+            return null;
+        }
+
         try {
-            if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
-                return HttpUtil.downloadBytes(imageUrl);
-            } else {
-                Path localPath = Paths.get(imageUrl);
-                if (Files.exists(localPath)) {
-                    return Files.readAllBytes(localPath);
-                }
-            }
+            return HttpUtil.downloadBytes(imageUrl);
         } catch (Exception e) {
             log.error("Failed to download image: url={}", imageUrl, e);
         }

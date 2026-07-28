@@ -113,6 +113,21 @@ kb-document:
 kb-graph:
   url: http://localhost:8088
 
+# Direct address of the kb-user-auth service (used for local development; leave blank to use Nacos service discovery)
+kb-user-auth:
+  url: http://localhost:8081
+
+# JWT security configuration
+security:
+  jwt:
+    exclude-paths: >
+      /actuator/**,
+      /doc.html,
+      /swagger-resources/**,
+      /v3/api-docs/**,
+      /webjars/**,
+      /favicon.ico
+
 # AI default configuration
 ai:
   default-model: qwen
