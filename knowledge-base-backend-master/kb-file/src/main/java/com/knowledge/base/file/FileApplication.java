@@ -3,6 +3,7 @@ package com.knowledge.base.file;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * File service bootstrap class
@@ -12,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  */
 @SpringBootApplication(scanBasePackages = "com.knowledge.base")
 @MapperScan("com.knowledge.base.file.mapper")
+@EnableFeignClients(basePackages = "com.knowledge.base.file.feign")
 public class FileApplication {
 
     public static void main(String[] args) {

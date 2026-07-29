@@ -2,6 +2,7 @@ package com.knowledge.base.document.feign;
 
 import com.knowledge.base.common.result.Result;
 import com.knowledge.base.document.config.FeignMultipartSupportConfig;
+import com.knowledge.base.document.config.InternalFeignConfig;
 import com.knowledge.base.document.dto.FileUploadResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
@@ -20,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
     name = "kb-file",
     url = "${kb-file.url:}",
     path = "/files",
-    configuration = FeignMultipartSupportConfig.class,
+    configuration = {FeignMultipartSupportConfig.class, InternalFeignConfig.class},
     fallbackFactory = FileServiceFallbackFactory.class
 )
 public interface FileServiceFeignClient {

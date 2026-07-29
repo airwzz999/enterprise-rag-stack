@@ -1,23 +1,29 @@
 package com.knowledge.base.file.config;
 
+import com.knowledge.base.common.config.CustomAccessDeniedHandler;
+import com.knowledge.base.common.config.CustomAuthenticationEntryPoint;
+import com.knowledge.base.file.filter.JwtAuthenticationFilter;
+import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * File service security configuration
  *
- * <p>Configuration notes:</p>
- * <ul>
- *   <li>CSRF disabled: file uploads do not need CSRF protection</li>
- *   <li>Stateless sessions: authentication is fully delegated to the gateway</li>
- *   <li>All endpoints permitted: authentication is handled centrally by the gateway</li>
- * </ul>
+ * <p>Authentication is verified by {@link JwtAuthenticationFilter} via a Feign call to
+ * kb-user-auth. Previously this service trusted the gateway alone (anyRequest().permitAll(),
+ * with /files/** explicitly marked "fully open"), so upload/download/delete endpoints
+ * were reachable with zero authentication by anything that could reach the service
+ * directly, and FileController derived the uploader identity from an unverified
+ * X-User-Id header.</p>
  *
  * @author airwzz999
  * @since 1.0.0
@@ -26,6 +32,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Resource
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Resource
+    private CustomAuthenticationEntryPoint authEntryPoint;
+
+    @Resource
+    private CustomAccessDeniedHandler accessDeniedHandler;
 
     /**
      * Configure the security filter chain
@@ -47,8 +62,11 @@ public class SecurityConfig {
                 // Disable CORS (handled centrally by the gateway)
                 .cors(AbstractHttpConfigurer::disable)
 
-                // Permit all requests (authentication is handled centrally by the gateway)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // Health checks and monitoring: fully open
                         .requestMatchers("/actuator/**").permitAll()
 
@@ -56,11 +74,13 @@ public class SecurityConfig {
                         .requestMatchers("/doc.html", "/swagger-resources/**",
                                 "/v3/api-docs/**", "/webjars/**", "/swagger-ui/**").permitAll()
 
-                        // File upload and download endpoints: fully open (access controlled by the gateway)
-                        .requestMatchers("/files/**").permitAll()
+                        // All other requests require a valid JWT
+                        .anyRequest().authenticated()
+                )
 
-                        // All other requests: permitted (authentication handled centrally by the gateway)
-                        .anyRequest().permitAll()
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
                 );
 
         return http.build();

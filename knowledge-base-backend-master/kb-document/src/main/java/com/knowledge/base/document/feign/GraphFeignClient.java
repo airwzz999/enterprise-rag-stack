@@ -1,6 +1,7 @@
 package com.knowledge.base.document.feign;
 
 import com.knowledge.base.common.result.Result;
+import com.knowledge.base.document.config.InternalFeignConfig;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,7 +23,8 @@ import java.util.Map;
 @FeignClient(
         name = "kb-graph",
         path = "/graph",
-        contextId = "graphFeignClient"
+        contextId = "graphFeignClient",
+        configuration = InternalFeignConfig.class
 )
 public interface GraphFeignClient {
 

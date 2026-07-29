@@ -51,6 +51,21 @@ spring:
           min-idle: 5
           time-between-eviction-runs: 30s
 
+# Direct address of the kb-user-auth service (used for local development; leave blank to use Nacos service discovery)
+kb-user-auth:
+  url: http://localhost:8081
+
+# JWT security configuration
+security:
+  jwt:
+    exclude-paths: >
+      /actuator/**,
+      /doc.html,
+      /swagger-resources/**,
+      /v3/api-docs/**,
+      /webjars/**,
+      /favicon.ico
+
 # Knife4j configuration
 knife4j:
   enable: true

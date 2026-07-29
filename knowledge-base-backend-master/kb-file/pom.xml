@@ -60,6 +60,12 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- OpenFeign (calls kb-user-auth to validate JWTs) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
         <!-- Apache POI (document processing) -->
         <dependency>
             <groupId>org.apache.poi</groupId>
