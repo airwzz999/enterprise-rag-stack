@@ -83,52 +83,36 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   },
 
   markAsRead: async (id: string) => {
-    try {
-      await notificationService.markAsRead(id);
-      set((state) => ({
-        notifications: state.notifications.map((n) =>
-          n.id === id ? { ...n, read: true } : n
-        ),
-        unreadCount: Math.max(0, state.unreadCount - 1),
-      }));
-    } catch (error) {
-      throw error;
-    }
+    await notificationService.markAsRead(id);
+    set((state) => ({
+      notifications: state.notifications.map((n) =>
+        n.id === id ? { ...n, read: true } : n
+      ),
+      unreadCount: Math.max(0, state.unreadCount - 1),
+    }));
   },
 
   markAllAsRead: async () => {
-    try {
-      await notificationService.markAllAsRead();
-      set((state) => ({
-        notifications: state.notifications.map((n) => ({ ...n, read: true })),
-        unreadCount: 0,
-      }));
-    } catch (error) {
-      throw error;
-    }
+    await notificationService.markAllAsRead();
+    set((state) => ({
+      notifications: state.notifications.map((n) => ({ ...n, read: true })),
+      unreadCount: 0,
+    }));
   },
 
   deleteNotification: async (id: string) => {
-    try {
-      await notificationService.deleteNotification(id);
-      set((state) => ({
-        notifications: state.notifications.filter((n) => n.id !== id),
-        unreadCount: state.notifications.find((n) => n.id === id)?.read
-          ? state.unreadCount
-          : Math.max(0, state.unreadCount - 1),
-      }));
-    } catch (error) {
-      throw error;
-    }
+    await notificationService.deleteNotification(id);
+    set((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== id),
+      unreadCount: state.notifications.find((n) => n.id === id)?.read
+        ? state.unreadCount
+        : Math.max(0, state.unreadCount - 1),
+    }));
   },
 
   clearAll: async () => {
-    try {
-      await notificationService.clearAll();
-      set({ notifications: [], unreadCount: 0 });
-    } catch (error) {
-      throw error;
-    }
+    await notificationService.clearAll();
+    set({ notifications: [], unreadCount: 0 });
   },
 
   reset: () => {

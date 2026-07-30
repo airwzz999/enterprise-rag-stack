@@ -470,7 +470,7 @@ const AIWritingPage: React.FC = () => {
     }
     const firstLine = lines[titleLineIdx].trim();
     // Strip Markdown heading markers (#, ## etc.) and bold markers
-    let title = firstLine
+    const title = firstLine
       .replace(/^#{1,6}\s+/, '')   // # Heading → Heading
       .replace(/\*\*(.+?)\*\*/g, '$1') // **bold** → bold
       .replace(/^>\s*/, '')         // > Blockquote

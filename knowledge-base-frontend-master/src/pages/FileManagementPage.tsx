@@ -880,7 +880,6 @@ export const FileManagementPage: React.FC = () => {
                 <Spin tip="Loading..." />
               </div>
             )}
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               src={videoUrl}
               controls
@@ -944,7 +943,6 @@ export const FileManagementPage: React.FC = () => {
                 <Spin tip="Loading..." />
               </div>
             )}
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <audio
               src={audioUrl}
               controls

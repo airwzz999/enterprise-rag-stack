@@ -79,8 +79,8 @@ function parseSections(content: string): DocSection[] {
 
       // Strip numbering for display
       const displayTitle = rawTitle
-        .replace(/^[\d]+\.[\d]+(?:\.\d+)*[\s\.\)\）\、]*/, '')
-        .replace(/^[\d]+[\.\)\）\、]\s*/, '')
+        .replace(/^[\d]+\.[\d]+(?:\.\d+)*[\s.)）、]*/, '')
+        .replace(/^[\d]+[.)）、]\s*/, '')
         .trim();
 
       currentHeading = {

@@ -247,7 +247,6 @@ export const DocumentDetailPage: React.FC = () => {
   // Code highlighting initialization - using a more reliable approach
   useEffect(() => {
     let mounted = true;
-    let highlightAttempts = 0;
     const maxAttempts = 3;
 
     const initPrism = async () => {
@@ -368,8 +367,8 @@ export const DocumentDetailPage: React.FC = () => {
           const level = match[1].length;
           const rawTitle = match[2];
           const displayTitle = rawTitle
-            .replace(/^[\d]+\.[\d]+(?:\.\d+)*[\s\.\)\）\、]*/, '')
-            .replace(/^[\d]+[\.\)\）\、]\s*/, '')
+            .replace(/^[\d]+\.[\d]+(?:\.\d+)*[\s.)）、]*/, '')
+            .replace(/^[\d]+[.)）、]\s*/, '')
             .trim();
           const title = displayTitle || rawTitle;
           const stableId = `md-heading-${headingIndex}`;

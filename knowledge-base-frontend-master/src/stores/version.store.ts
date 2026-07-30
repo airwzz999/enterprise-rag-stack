@@ -48,13 +48,9 @@ export const useVersionStore = create<VersionState>((set, get) => ({
   },
 
   restoreVersion: async (documentId: string, versionId: string) => {
-    try {
-      await versionService.restoreVersion(documentId, versionId);
-      // Refetch the version list
-      await get().fetchVersions(documentId);
-    } catch (error) {
-      throw error;
-    }
+    await versionService.restoreVersion(documentId, versionId);
+    // Refetch the version list
+    await get().fetchVersions(documentId);
   },
 
   compareVersions: async (documentId: string, versionId1: string, versionId2: string) => {
@@ -69,14 +65,10 @@ export const useVersionStore = create<VersionState>((set, get) => ({
   },
 
   createSnapshot: async (documentId: string, changeLog?: string) => {
-    try {
-      const newVersion = await versionService.createSnapshot(documentId, changeLog);
-      set((state) => ({
-        versions: [newVersion, ...state.versions],
-      }));
-    } catch (error) {
-      throw error;
-    }
+    const newVersion = await versionService.createSnapshot(documentId, changeLog);
+    set((state) => ({
+      versions: [newVersion, ...state.versions],
+    }));
   },
 
   reset: () => {

@@ -180,55 +180,39 @@ export const useFoundationStore = create<FoundationStore>()(
       },
 
       markAsRead: async (id: string) => {
-        try {
-          // TODO: replace with actual API call
-          // await foundationService.markAsRead(id);
-          set((state) => ({
-            notifications: state.notifications.map((n) =>
-              n.id === id ? { ...n, read: true } : n
-            ),
-            unreadCount: Math.max(0, state.unreadCount - 1),
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        // await foundationService.markAsRead(id);
+        set((state) => ({
+          notifications: state.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n
+          ),
+          unreadCount: Math.max(0, state.unreadCount - 1),
+        }));
       },
 
       markAllAsRead: async () => {
-        try {
-          // TODO: replace with actual API call
-          // await foundationService.markAllAsRead();
-          set((state) => ({
-            notifications: state.notifications.map((n) => ({ ...n, read: true })),
-            unreadCount: 0,
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        // await foundationService.markAllAsRead();
+        set((state) => ({
+          notifications: state.notifications.map((n) => ({ ...n, read: true })),
+          unreadCount: 0,
+        }));
       },
 
       deleteNotification: async (id: string) => {
-        try {
-          // TODO: replace with actual API call
-          // await foundationService.deleteNotification(id);
-          set((state) => ({
-            notifications: state.notifications.filter((n) => n.id !== id),
-            unreadCount: state.notifications.find((n) => n.id === id)?.read
-              ? state.unreadCount
-              : Math.max(0, state.unreadCount - 1),
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        // await foundationService.deleteNotification(id);
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+          unreadCount: state.notifications.find((n) => n.id === id)?.read
+            ? state.unreadCount
+            : Math.max(0, state.unreadCount - 1),
+        }));
       },
 
       sendNotification: async (_data: Partial<Notification>) => {
-        try {
-          // TODO: replace with actual API call
-          // await foundationService.sendNotification(data);
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        // await foundationService.sendNotification(data);
       },
 
       resetNotifications: () => {
@@ -265,54 +249,42 @@ export const useFoundationStore = create<FoundationStore>()(
       },
 
       fetchConfig: async (key: string) => {
-        try {
-          // TODO: replace with actual API call
-          // const value = await foundationService.fetchConfig(key);
-          const value = '';
-          set((state) => ({
-            configMap: { ...state.configMap, [key]: value },
-          }));
-          return value;
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        // const value = await foundationService.fetchConfig(key);
+        const value = '';
+        set((state) => ({
+          configMap: { ...state.configMap, [key]: value },
+        }));
+        return value;
       },
 
       updateConfig: async (data: Partial<SystemConfig>) => {
-        try {
-          // TODO: replace with actual API call
-          // await foundationService.updateConfig(data);
-          if (data.configKey && data.configValue !== undefined) {
-            const key = data.configKey as string;
-            const value = data.configValue as string;
-            set((state) => ({
-              configs: state.configs.map((c) =>
-                c.configKey === key ? { ...c, ...data } : c
-              ),
-              configMap: {
-                ...state.configMap,
-                [key]: value,
-              } as Record<string, string>,
-            }));
-          }
-        } catch (error) {
-          throw error;
+        // TODO: replace with actual API call
+        // await foundationService.updateConfig(data);
+        if (data.configKey && data.configValue !== undefined) {
+          const key = data.configKey as string;
+          const value = data.configValue as string;
+          set((state) => ({
+            configs: state.configs.map((c) =>
+              c.configKey === key ? { ...c, ...data } : c
+            ),
+            configMap: {
+              ...state.configMap,
+              [key]: value,
+            } as Record<string, string>,
+          }));
         }
       },
 
       deleteConfig: async (key: string) => {
-        try {
-          // TODO: replace with actual API call
-          // await foundationService.deleteConfig(key);
-          set((state) => ({
-            configs: state.configs.filter((c) => c.configKey !== key),
-            configMap: Object.fromEntries(
-              Object.entries(state.configMap).filter(([k]) => k !== key)
-            ),
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        // await foundationService.deleteConfig(key);
+        set((state) => ({
+          configs: state.configs.filter((c) => c.configKey !== key),
+          configMap: Object.fromEntries(
+            Object.entries(state.configMap).filter(([k]) => k !== key)
+          ),
+        }));
       },
 
       refreshConfigs: async () => {
@@ -389,16 +361,12 @@ export const useFoundationStore = create<FoundationStore>()(
       },
 
       fetchDictData: async (code: string) => {
-        try {
-          // TODO: replace with actual API call
-          // const dictData = await foundationService.fetchDictData(code);
-          const dictData: DictData[] = [];
-          set((state) => ({
-            dictDataMap: { ...state.dictDataMap, [code]: dictData },
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        // const dictData = await foundationService.fetchDictData(code);
+        const dictData: DictData[] = [];
+        set((state) => ({
+          dictDataMap: { ...state.dictDataMap, [code]: dictData },
+        }));
       },
 
       refreshDicts: async () => {
@@ -457,51 +425,35 @@ export const useNotificationStore = create<NotificationState>()(
       },
 
       markAsRead: async (id: string) => {
-        try {
-          // TODO: replace with actual API call
-          set((state) => ({
-            notifications: state.notifications.map((n) =>
-              n.id === id ? { ...n, read: true } : n
-            ),
-            unreadCount: Math.max(0, state.unreadCount - 1),
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        set((state) => ({
+          notifications: state.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n
+          ),
+          unreadCount: Math.max(0, state.unreadCount - 1),
+        }));
       },
 
       markAllAsRead: async () => {
-        try {
-          // TODO: replace with actual API call
-          set((state) => ({
-            notifications: state.notifications.map((n) => ({ ...n, read: true })),
-            unreadCount: 0,
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        set((state) => ({
+          notifications: state.notifications.map((n) => ({ ...n, read: true })),
+          unreadCount: 0,
+        }));
       },
 
       deleteNotification: async (id: string) => {
-        try {
-          // TODO: replace with actual API call
-          set((state) => ({
-            notifications: state.notifications.filter((n) => n.id !== id),
-            unreadCount: state.notifications.find((n) => n.id === id)?.read
-              ? state.unreadCount
-              : Math.max(0, state.unreadCount - 1),
-          }));
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+          unreadCount: state.notifications.find((n) => n.id === id)?.read
+            ? state.unreadCount
+            : Math.max(0, state.unreadCount - 1),
+        }));
       },
 
       sendNotification: async (_data: Partial<Notification>) => {
-        try {
-          // TODO: replace with actual API call
-        } catch (error) {
-          throw error;
-        }
+        // TODO: replace with actual API call
       },
 
       resetNotifications: () => {
@@ -547,51 +499,39 @@ export const useSystemConfigStore = create<SystemConfigState>()(
         },
 
         fetchConfig: async (key: string) => {
-          try {
-            // TODO: replace with actual API call
-            const value = '';
-            set((state) => ({
-              configMap: { ...state.configMap, [key]: value },
-            }));
-            return value;
-          } catch (error) {
-            throw error;
-          }
+          // TODO: replace with actual API call
+          const value = '';
+          set((state) => ({
+            configMap: { ...state.configMap, [key]: value },
+          }));
+          return value;
         },
 
         updateConfig: async (data: Partial<SystemConfig>) => {
-          try {
-            // TODO: replace with actual API call
-            if (data.configKey && data.configValue !== undefined) {
-              const key = data.configKey as string;
-              const value = data.configValue as string;
-              set((state) => ({
-                configs: state.configs.map((c) =>
-                  c.configKey === key ? { ...c, ...data } : c
-                ),
-                configMap: {
-                  ...state.configMap,
-                  [key]: value,
-                } as Record<string, string>,
-              }));
-            }
-          } catch (error) {
-            throw error;
+          // TODO: replace with actual API call
+          if (data.configKey && data.configValue !== undefined) {
+            const key = data.configKey as string;
+            const value = data.configValue as string;
+            set((state) => ({
+              configs: state.configs.map((c) =>
+                c.configKey === key ? { ...c, ...data } : c
+              ),
+              configMap: {
+                ...state.configMap,
+                [key]: value,
+              } as Record<string, string>,
+            }));
           }
         },
 
         deleteConfig: async (key: string) => {
-          try {
-            // TODO: replace with actual API call
-            set((state) => ({
-              configs: state.configs.filter((c) => c.configKey !== key),
-              configMap: Object.fromEntries(
-                Object.entries(state.configMap).filter(([k]) => k !== key)
-              ),
-            }));
-          } catch (error) {
-            throw error;
-          }
+          // TODO: replace with actual API call
+          set((state) => ({
+            configs: state.configs.filter((c) => c.configKey !== key),
+            configMap: Object.fromEntries(
+              Object.entries(state.configMap).filter(([k]) => k !== key)
+            ),
+          }));
         },
 
         refreshConfigs: async () => {
@@ -691,15 +631,11 @@ export const useDictStore = create<DictState>()(
         },
 
         fetchDictData: async (code: string) => {
-          try {
-            // TODO: replace with actual API call
-            const dictData: DictData[] = [];
-            set((state) => ({
-              dictDataMap: { ...state.dictDataMap, [code]: dictData },
-            }));
-          } catch (error) {
-            throw error;
-          }
+          // TODO: replace with actual API call
+          const dictData: DictData[] = [];
+          set((state) => ({
+            dictDataMap: { ...state.dictDataMap, [code]: dictData },
+          }));
         },
 
         refreshDicts: async () => {

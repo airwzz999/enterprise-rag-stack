@@ -918,8 +918,8 @@ const CreateDocumentPage: React.FC = () => {
     const textarea = document.getElementById('documentContent') as HTMLTextAreaElement;
     if (!textarea) return;
 
-    let start = textarea.selectionStart;
-    let end = textarea.selectionEnd;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
     const selectedText = content.substring(start, end) || placeholder;
 
     // Build the new text
