@@ -8,8 +8,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.knowledge.base.common.config.InstanceIdentifier;
 import com.knowledge.base.common.exception.BusinessException;
+import com.knowledge.base.common.exception.ForbiddenException;
 import com.knowledge.base.common.result.PageResult;
 import com.knowledge.base.common.utils.SnowflakeIdGenerator;
+import com.knowledge.base.common.utils.UserContextUtil;
 import com.knowledge.base.file.config.FileStorageProperties;
 import com.knowledge.base.file.config.RabbitMQConfig;
 import com.knowledge.base.file.dto.FileQueryDTO;
@@ -232,6 +234,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
             throw new BusinessException("File has been deleted");
         }
 
+        checkReadAccess(fileInfo);
+
         // 3. Get the storage implementation
         FileStorage storage = storageFactory.getStorage();
 
@@ -302,6 +306,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
             throw new BusinessException("File does not exist");
         }
 
+        checkOwnership(fileInfo);
+
         // Check whether the file is referenced by other documents (business-layer validation)
         // TODO: Implement file reference check logic
 
@@ -367,6 +373,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
         if (fileInfo == null) {
             throw new BusinessException("File does not exist");
         }
+
+        checkReadAccess(fileInfo);
 
         return convertToVO(fileInfo);
     }
@@ -455,6 +463,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
             throw new BusinessException("File has been deleted");
         }
 
+        checkReadAccess(fileInfo);
+
         // 3. Get the storage implementation
         FileStorage storage = storageFactory.getStorage();
 
@@ -504,6 +514,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
         if (fileInfo == null) {
             throw new BusinessException("File does not exist");
         }
+
+        checkOwnership(fileInfo);
 
         // Only audio/video files support HLS transcoding
         if (!isMediaFile(fileInfo)) {
@@ -1047,6 +1059,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
             throw new BusinessException("HLS playlist does not exist");
         }
 
+        checkReadAccess(fileInfo);
+
         String hlsKey = fileInfo.getHlsPath() + "/master.m3u8";
         FileStorage storage = storageFactory.getStorage();
         response.setContentType("application/vnd.apple.mpegurl");
@@ -1066,6 +1080,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
         if (fileInfo == null || fileInfo.getHlsPath() == null) {
             throw new BusinessException("HLS segment does not exist");
         }
+
+        checkReadAccess(fileInfo);
 
         // segment format: "360p/000.ts" or "720p/000.ts"
         String hlsKey = fileInfo.getHlsPath() + "/" + segment;
@@ -1088,12 +1104,44 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, FileInfo> implement
             throw new BusinessException("Thumbnail does not exist");
         }
 
+        checkReadAccess(fileInfo);
+
         FileStorage storage = storageFactory.getStorage();
         response.setContentType("image/jpeg");
         response.setHeader("Cache-Control", "max-age=86400, public");
 
         try (OutputStream os = response.getOutputStream()) {
             storage.download(fileInfo.getThumbnailPath(), os);
+        }
+    }
+
+    /**
+     * Check whether the current caller may read this file.
+     *
+     * <p>accessLevel 2 (public) is readable by anyone authenticated; everything else
+     * (0-private, 1-team visible) is restricted to the uploader, since this service has
+     * no way to verify team membership - failing open on "team visible" would let any
+     * authenticated user read any team's files by guessing sequential file IDs.</p>
+     */
+    private void checkReadAccess(FileInfo fileInfo) {
+        if (fileInfo.getAccessLevel() != null && fileInfo.getAccessLevel() == 2) {
+            return;
+        }
+        Long currentUserId = UserContextUtil.getUserId();
+        if (currentUserId == null || !currentUserId.equals(fileInfo.getUploaderId())) {
+            throw new ForbiddenException("You do not have permission to access this file");
+        }
+    }
+
+    /**
+     * Check that the current caller is the file's uploader, for mutating operations
+     * (delete, format conversion) that must never be available to non-owners regardless
+     * of accessLevel.
+     */
+    private void checkOwnership(FileInfo fileInfo) {
+        Long currentUserId = UserContextUtil.getUserId();
+        if (currentUserId == null || !currentUserId.equals(fileInfo.getUploaderId())) {
+            throw new ForbiddenException("You do not have permission to modify this file");
         }
     }
 
