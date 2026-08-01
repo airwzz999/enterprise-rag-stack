@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.knowledge.base.common.enums.DocumentStatus;
 import com.knowledge.base.common.exception.BusinessException;
+import com.knowledge.base.common.exception.ForbiddenException;
 import com.knowledge.base.common.result.Result;
 import com.knowledge.base.common.result.ResultCode;
 import com.knowledge.base.document.service.LikeService;
@@ -470,6 +471,8 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
             throw new BusinessException(ResultCode.DOCUMENT_NOT_EXIST);
         }
 
+        checkDraftAccess(existDocument);
+
         // If there is content to update, update the content in MongoDB (skip the content update if MongoDB is unavailable)
         String contentId = existDocument.getContentId();
         if (StrUtil.isNotBlank(documentDTO.getContent())) {
@@ -605,6 +608,10 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         Document existDocument = documentMapper.selectById(documentId);
         Long categoryId = existDocument != null ? existDocument.getCategoryId() : null;
 
+        if (existDocument != null) {
+            checkDraftAccess(existDocument);
+        }
+
         int count = documentMapper.deleteById(documentId);
 
         // Asynchronously remove this document's vector index from RAG
@@ -643,12 +650,40 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         return authorVO;
     }
 
+    /**
+     * Rejects access to another user's draft.
+     *
+     * <p>The document:list/edit/delete authorities are granted broadly to ROLE_USER
+     * (see sql/18_grant_role_user_document_permissions.sql) so that members can
+     * collaborate on published content wiki-style; they were never meant to expose
+     * other members' unpublished drafts. Drafts skip RAG/ES indexing precisely because
+     * they aren't supposed to be visible to anyone but their author yet, so without this
+     * check any member could read, edit, delete, or force-publish someone else's
+     * in-progress draft purely by guessing its document ID.</p>
+     */
+    private void checkDraftAccess(Document document) {
+        if (!DocumentStatus.DRAFT.getCode().equals(document.getStatus())) {
+            return;
+        }
+        Long currentUserId;
+        try {
+            currentUserId = UserContext.getCurrentUserId();
+        } catch (IllegalStateException e) {
+            throw new ForbiddenException("This draft is only visible to its author");
+        }
+        if (!Objects.equals(document.getAuthorId(), currentUserId)) {
+            throw new ForbiddenException("This draft is only visible to its author");
+        }
+    }
+
     @Override
     public DocumentVO getDocumentById(Long documentId) {
         Document document = documentMapper.selectById(documentId);
         if (document == null) {
             throw new BusinessException(ResultCode.DOCUMENT_NOT_EXIST);
         }
+
+        checkDraftAccess(document);
 
         DocumentVO documentVO = BeanUtil.copyProperties(document, DocumentVO.class);
 
@@ -688,6 +723,8 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         if (document == null) {
             throw new BusinessException(ResultCode.DOCUMENT_NOT_EXIST);
         }
+
+        checkDraftAccess(document);
 
         // Increment the view count
         documentMapper.incrementViewCount(documentId);
@@ -760,6 +797,20 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         if (authorId != null) {
             wrapper.eq(Document::getAuthorId, authorId);
         }
+
+        // Drafts are only visible to their author, regardless of the status filter passed in -
+        // otherwise this listing would leak the titles/summaries of every other member's
+        // in-progress drafts (see checkDraftAccess for why drafts must stay private).
+        Long viewerId = null;
+        try {
+            viewerId = UserContext.getCurrentUserId();
+        } catch (IllegalStateException ignored) {
+            // anonymous caller: no drafts are visible below
+        }
+        final Long draftOwnerId = viewerId != null ? viewerId : -1L;
+        wrapper.and(w -> w.ne(Document::getStatus, DocumentStatus.DRAFT.getCode())
+                .or(sub -> sub.eq(Document::getStatus, DocumentStatus.DRAFT.getCode())
+                        .eq(Document::getAuthorId, draftOwnerId)));
 
         if (StringUtils.hasText(keyword)) {
             wrapper.and(w -> w.like(Document::getTitle, keyword)
@@ -1356,6 +1407,8 @@ public class DocumentServiceImpl extends ServiceImpl<DocumentMapper, Document> i
         if (document == null) {
             throw new BusinessException("Document does not exist");
         }
+
+        checkDraftAccess(document);
 
         // Only draft, published, or pending-review documents can be published directly
         Integer status = document.getStatus();
