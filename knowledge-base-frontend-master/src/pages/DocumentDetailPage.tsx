@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, Spin, Tooltip, Modal, Form, Input, Pagination, Select, DatePicker, Space, Divider, Tag, Typography } from 'antd';
+import { Button, Spin, Tooltip, Modal, Form, Input, Pagination, Select, DatePicker, Tag, Typography } from 'antd';
 import { App } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -22,7 +22,6 @@ import {
   DeleteOutlined,
   GlobalOutlined,
   LockOutlined,
-  TeamOutlined,
   MessageOutlined,
   FileTextOutlined,
 } from '@ant-design/icons';
@@ -32,7 +31,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { useDocumentStore, useAuthStore, useFavoriteStore, useAppStore } from '@/stores';
 import { documentService, ShareVO } from '@/services/document.service';
-import { commentService, PageResult } from '@/services/comment.service';
+import { commentService } from '@/services/comment.service';
 import { aiService } from '@/services/ai.service';
 import UserAvatar from '@/components/common/UserAvatar';
 import type { Comment } from '@/types';
@@ -189,7 +188,7 @@ export const DocumentDetailPage: React.FC = () => {
   const { enableAI, enableComments } = useAppStore();
   const canEditDocument = hasPermission(user, PERMISSIONS.documentEdit);
   const { currentDocument, isLoading, fetchDocument, likeDocument, prevDocument, nextDocument } = useDocumentStore();
-  const { toggleFavorite, checkFavorite, loadFavorites, favorites } = useFavoriteStore();
+  const { toggleFavorite, checkFavorite, favorites } = useFavoriteStore();
 
   // Use a selector to ensure the state subscription
   const isFavorited = useFavoriteStore((state) => {
@@ -219,7 +218,7 @@ export const DocumentDetailPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState('');
   const [tocItems, setTocItems] = useState<Array<{ id: string; title: string; level: number }>>([]);
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
-  const [prismLoaded, setPrismLoaded] = useState(false);
+  const [, setPrismLoaded] = useState(false);
   const [contentPage, setContentPage] = useState(1); // Paginated loading: current page loaded
   const PAGE_SIZE = 30000; // Characters per page
 
@@ -1069,8 +1068,9 @@ export const DocumentDetailPage: React.FC = () => {
   };
 
   // Process tags, converting a string into an array
-  const tags = currentDocument?.tags
-    ? (typeof currentDocument.tags === 'string' ? currentDocument.tags.split(',').filter(Boolean) : currentDocument.tags)
+  const rawTags = currentDocument?.tags as unknown as string | string[] | undefined;
+  const tags = rawTags
+    ? (typeof rawTags === 'string' ? rawTags.split(',').filter(Boolean) : rawTags)
     : [];
 
   // Get the author avatar text

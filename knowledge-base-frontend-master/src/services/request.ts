@@ -238,7 +238,7 @@ function handleTokenExpired(error: AxiosError): Promise<any> {
   }
 
   // Call the token refresh endpoint
-  return request
+  return http
     .post<LoginResponse>('/auth/auth/refresh', null, {
       params: { refreshToken },
       skipAuth: true, // Do not use the old token when refreshing
@@ -258,7 +258,7 @@ function handleTokenExpired(error: AxiosError): Promise<any> {
       }
       return request(originalRequest!);
     })
-    .catch((refreshError) => {
+    .catch(() => {
       // Refresh failed, clear the token and redirect to login
       tokenStorage.clearToken();
       handleUnauthorized();
@@ -290,16 +290,6 @@ function handleUnauthorized(): void {
 }
 
 /**
- * Handle forbidden errors (403)
- * When the API returns 403, it means the user is logged in but lacks permission;
- * the token is not cleared and the user is not redirected to the login page
- */
-function handleForbidden(): void {
-  // Show a notice
-  message.error('Insufficient permissions to access this resource');
-}
-
-/**
  * Handle request errors
  *
  * @param error Axios error object
@@ -313,8 +303,7 @@ function handleRequestError(
   let errorMessage = 'Request failed';
 
   if (error.response) {
-    const { status, data, config } = error.response;
-    const requestUrl = config?.url || '';
+    const { status, data } = error.response;
 
     switch (status) {
       case 400:

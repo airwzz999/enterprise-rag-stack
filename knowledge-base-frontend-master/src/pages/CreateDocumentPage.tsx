@@ -418,21 +418,6 @@ const CreateDocumentPage: React.FC = () => {
   };
 
   /**
-   * Upload a single image
-   */
-  const uploadSingleImage = async (imageUrl: string): Promise<string> => {
-    try {
-      console.log('Starting image upload:', imageUrl);
-      const response = await fileService.uploadFromUrl(imageUrl);
-      console.log('Image uploaded successfully:', imageUrl, '->', response.newUrl);
-      return response.newUrl;
-    } catch (error) {
-      console.error('Image upload failed:', imageUrl, error);
-      throw error;
-    }
-  };
-
-  /**
    * Handle double-click to select the whole line
    */
   const handleDoubleClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
@@ -481,7 +466,7 @@ const CreateDocumentPage: React.FC = () => {
   /**
    * Handle mouse down event
    */
-  const handleMouseDown = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+  const handleMouseDown = (_e: React.MouseEvent<HTMLTextAreaElement>) => {
     console.log('🖱️ Mouse down'); // Debug log
     // Only hide the toolbar, without interfering with any default behavior
     setShowSelectionToolbar(false);
@@ -545,11 +530,6 @@ const CreateDocumentPage: React.FC = () => {
     e.preventDefault();
     const textarea = e.target as HTMLTextAreaElement;
     if (!textarea) return;
-
-    // Check whether any text is selected
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const hasSelection = start !== end;
 
     setContextMenu({
       visible: true,
@@ -778,7 +758,6 @@ const CreateDocumentPage: React.FC = () => {
    */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const ctrlOrCmd = e.ctrlKey || e.metaKey;
 
     // Ctrl/Cmd + Enter: save document
@@ -1072,7 +1051,7 @@ const CreateDocumentPage: React.FC = () => {
    */
   const processContentChange = useRef(
     (() => {
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       return (newContent: string) => {
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -1315,7 +1294,7 @@ const CreateDocumentPage: React.FC = () => {
         docId = currentDocId;
       } else {
         // Not auto-saved yet, create a new document
-        const result = await createDocument(documentData);
+        const result = await createDocument(documentData as any);
         docId = String(result.id);
       }
 
@@ -1355,7 +1334,7 @@ const CreateDocumentPage: React.FC = () => {
         await documentService.updateDocument(currentDocId, documentData as any);
         console.log('Draft updated successfully, documentId:', currentDocId);
       } else {
-        const result = await createDocument(documentData);
+        const result = await createDocument(documentData as any);
         console.log('Draft created successfully, result:', result);
       }
       clearDraft();
@@ -1411,7 +1390,7 @@ const CreateDocumentPage: React.FC = () => {
         docId = currentDocId;
       } else {
         // Not auto-saved yet, create a new document
-        const result = await createDocument(documentData);
+        const result = await createDocument(documentData as any);
         docId = String(result.id);
       }
 
@@ -1507,17 +1486,18 @@ Summarize the core points of the document and action recommendations...
           alignItems: 'center',
           gap: '24px',
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            fontSize: '20px',
-            fontWeight: 700,
-            color: 'var(--primary-color)',
-            textDecoration: 'none',
-            cursor: 'pointer',
-            onClick: () => navigate('/'),
-          }}>
+          <div
+            onClick={() => navigate('/')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: 'var(--primary-color)',
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>

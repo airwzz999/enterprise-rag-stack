@@ -209,7 +209,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // Create a new filter object, but only update the provided fields
       const newFilter = { ...state.filter, ...filter };
       // Only update when the filter has actually changed
-      const hasChanged = Object.keys(filter).some(
+      const hasChanged = (Object.keys(filter) as Array<keyof DocumentFilter>).some(
         key => JSON.stringify(state.filter[key]) !== JSON.stringify(filter[key])
       );
 

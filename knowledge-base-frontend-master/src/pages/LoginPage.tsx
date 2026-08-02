@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, Input, Button, Typography, Tabs, Spin, Select } from 'antd';
 import { App } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined, TeamOutlined } from '@ant-design/icons';
+import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores';
 import { foundationService, authService, teamService } from '@/services';

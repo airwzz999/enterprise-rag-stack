@@ -25,7 +25,6 @@ import {
   LockOutlined,
   UnlockOutlined,
   FolderOpenOutlined,
-  TeamOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { userService, roleService, teamService } from '@/services';

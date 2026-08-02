@@ -15,8 +15,6 @@ import {
   UserOutlined,
   EyeOutlined,
   HeartOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
   TrophyOutlined,
   RiseOutlined,
 } from '@ant-design/icons';
@@ -549,14 +547,6 @@ export const StatisticsPage: React.FC = () => {
       </Row>
     </div>
   );
-};
-
-// Calculate date range based on period
-const getDateRange = (period: 'week' | 'month' | 'year'): { startDate: string; endDate: string } => {
-  const endDate = dayjs().format('YYYY-MM-DD');
-  const dayMap: Record<string, number> = { week: 6, month: 29, year: 364 };
-  const startDate = dayjs().subtract(dayMap[period], 'days').format('YYYY-MM-DD');
-  return { startDate, endDate };
 };
 
 export default StatisticsPage;

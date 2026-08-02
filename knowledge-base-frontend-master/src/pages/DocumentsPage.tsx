@@ -9,8 +9,6 @@ import { App } from 'antd';
 import {
   MoreOutlined,
   EyeOutlined,
-  LikeOutlined,
-  MessageOutlined,
   FileTextOutlined,
   DeleteOutlined,
   ExportOutlined,
@@ -18,19 +16,12 @@ import {
   ShareAltOutlined,
   DownloadOutlined,
   StarOutlined,
-  ClockCircleOutlined,
   FileMarkdownOutlined,
-  FolderOutlined,
-  CodeOutlined,
-  DollarOutlined,
-  TeamOutlined,
-  LayoutOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore, useDocumentStore, useFavoriteStore, useTeamStore } from '@/stores';
 import { formatFileSize } from '@/utils';
 import { documentService, categoryService } from '@/services';
-import { Document } from '@/types';
 import UserAvatar from '@/components/common/UserAvatar';
 import TeamIcon from '@/components/common/TeamIcon';
 import dayjs from 'dayjs';
@@ -76,11 +67,10 @@ export const DocumentsPage: React.FC = () => {
     total,
     currentPage,
     pageSize,
-    filter,
     fetchDocuments,
     setFilter,
   } = useDocumentStore();
-  const { toggleFavorite, isFavorited, checkFavorite } = useFavoriteStore();
+  const { toggleFavorite } = useFavoriteStore();
   const { teamTree, selectedTeam, setSelectedTeam } = useTeamStore();
 
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
@@ -91,7 +81,7 @@ export const DocumentsPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>();
   const [sortBy, setSortBy] = useState<string>('updatedAt');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
-  const [favoriteLoading, setFavoriteLoading] = useState<string | null>(null);
+  const [, setFavoriteLoading] = useState<string | null>(null);
 
   // Runs on component mount: read category and team filters from URL params
   useEffect(() => {
@@ -267,27 +257,6 @@ export const DocumentsPage: React.FC = () => {
 
   const normalizedDocuments = documents.map(normalizeDocument);
 
-  // Get category icon
-  const getCategoryIcon = (categoryName: string) => {
-    const name = categoryName?.toLowerCase() || '';
-    if (name.includes('technical') || name.includes('development') || name.includes('backend') || name.includes('frontend')) {
-      return <CodeOutlined style={{ fontSize: 16, color: COLORS.textSecondary }} />;
-    }
-    if (name.includes('business') || name.includes('process')) {
-      return <LayoutOutlined style={{ fontSize: 16, color: COLORS.textSecondary }} />;
-    }
-    if (name.includes('human') || name.includes('hr')) {
-      return <TeamOutlined style={{ fontSize: 16, color: COLORS.textSecondary }} />;
-    }
-    if (name.includes('product') || name.includes('design')) {
-      return <LayoutOutlined style={{ fontSize: 16, color: COLORS.textSecondary }} />;
-    }
-    if (name.includes('financial') || name.includes('expense')) {
-      return <DollarOutlined style={{ fontSize: 16, color: COLORS.textSecondary }} />;
-    }
-    return <FolderOutlined style={{ fontSize: 16, color: COLORS.textSecondary }} />;
-  };
-
   // Get category name (prefer the categoryName from the API, fall back to local lookup)
   const getCategoryName = (categoryId?: string | number, apiCategoryName?: string) => {
     if (apiCategoryName) return apiCategoryName;
@@ -350,15 +319,6 @@ export const DocumentsPage: React.FC = () => {
         }
       },
     });
-  };
-
-  // Bulk export
-  const handleBatchExport = async () => {
-    if (selectedDocuments.length === 0) {
-      message.warning('Please select documents to export first');
-      return;
-    }
-    message.warning('The export feature is not yet implemented, please contact your administrator');
   };
 
   // Delete a single document
@@ -744,7 +704,6 @@ export const DocumentsPage: React.FC = () => {
             const tags = ['All', ...topCategories.slice(0, 8).map((cat: any) => cat.name)];
             return tags.map((tag) => {
               const isActive = selectedTag === tag;
-              const isHovered = false;
               return (
                 <span
                   key={tag}

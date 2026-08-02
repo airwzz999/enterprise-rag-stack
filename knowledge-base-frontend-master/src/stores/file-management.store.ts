@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { fileManagementService, FileMetadata, FileStatistics } from '@/services/file-management.service';
+import type { EntityId } from '@/types';
 
 /**
  * File management center state management
@@ -11,19 +12,19 @@ interface FileManagementState {
   error: string | null;
   currentCategory: string;
   searchKeyword: string;
-  selectedFiles: number[];
+  selectedFiles: EntityId[];
 
   // Action methods
   loadFileList: (category?: string) => Promise<void>;
   loadStatistics: () => Promise<void>;
   uploadFile: (file: File, isPublic?: boolean) => Promise<FileMetadata>;
-  deleteFile: (fileId: number) => Promise<void>;
-  batchDeleteFiles: (fileIds: number[]) => Promise<number>;
-  renameFile: (fileId: number, newFileName: string) => Promise<void>;
-  updateFilePermission: (fileId: number, isPublic: boolean) => Promise<void>;
-  copyFile: (fileId: number) => Promise<FileMetadata>;
+  deleteFile: (fileId: EntityId) => Promise<void>;
+  batchDeleteFiles: (fileIds: EntityId[]) => Promise<number>;
+  renameFile: (fileId: EntityId, newFileName: string) => Promise<void>;
+  updateFilePermission: (fileId: EntityId, isPublic: boolean) => Promise<void>;
+  copyFile: (fileId: EntityId) => Promise<FileMetadata>;
   searchFiles: (keyword: string) => Promise<void>;
-  setSelectedFiles: (fileIds: number[]) => void;
+  setSelectedFiles: (fileIds: EntityId[]) => void;
   setCurrentCategory: (category: string) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
@@ -102,7 +103,7 @@ export const useFileManagementStore = create<FileManagementState>((set, get) => 
   },
 
   // Delete file
-  deleteFile: async (fileId: number) => {
+  deleteFile: async (fileId: EntityId) => {
     set({ isLoading: true, error: null });
     try {
       await fileManagementService.deleteFile(fileId);
@@ -126,7 +127,7 @@ export const useFileManagementStore = create<FileManagementState>((set, get) => 
   },
 
   // Batch delete files
-  batchDeleteFiles: async (fileIds: number[]) => {
+  batchDeleteFiles: async (fileIds: EntityId[]) => {
     set({ isLoading: true, error: null });
     try {
       const count = await fileManagementService.batchDeleteFiles(fileIds);
@@ -153,7 +154,7 @@ export const useFileManagementStore = create<FileManagementState>((set, get) => 
   },
 
   // Rename file
-  renameFile: async (fileId: number, newFileName: string) => {
+  renameFile: async (fileId: EntityId, newFileName: string) => {
     set({ isLoading: true, error: null });
     try {
       await fileManagementService.renameFile(fileId, newFileName);
@@ -176,7 +177,7 @@ export const useFileManagementStore = create<FileManagementState>((set, get) => 
   },
 
   // Update file permission
-  updateFilePermission: async (fileId: number, isPublic: boolean) => {
+  updateFilePermission: async (fileId: EntityId, isPublic: boolean) => {
     set({ isLoading: true, error: null });
     try {
       await fileManagementService.updateFilePermission(fileId, isPublic);
@@ -199,7 +200,7 @@ export const useFileManagementStore = create<FileManagementState>((set, get) => 
   },
 
   // Copy file
-  copyFile: async (fileId: number) => {
+  copyFile: async (fileId: EntityId) => {
     set({ isLoading: true, error: null });
     try {
       const newFile = await fileManagementService.copyFile(fileId);
@@ -241,7 +242,7 @@ export const useFileManagementStore = create<FileManagementState>((set, get) => 
   },
 
   // Set selected files
-  setSelectedFiles: (fileIds: number[]) => {
+  setSelectedFiles: (fileIds: EntityId[]) => {
     set({ selectedFiles: fileIds });
   },
 

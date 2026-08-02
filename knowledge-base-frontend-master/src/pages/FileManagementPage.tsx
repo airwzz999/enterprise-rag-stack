@@ -53,6 +53,7 @@ import {
 import { useFileManagementStore } from '@/stores/file-management.store';
 import { useAppStore } from '@/stores';
 import { fileManagementService, FileMetadata } from '@/services/file-management.service';
+import type { EntityId } from '@/types';
 import mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 import ReactMarkdown from 'react-markdown';
@@ -544,7 +545,7 @@ export const FileManagementPage: React.FC = () => {
   };
 
   // Handle file deletion
-  const handleDelete = async (fileId: number) => {
+  const handleDelete = async (fileId: EntityId) => {
     try {
       await deleteFile(fileId);
       message.success('File deleted successfully');
@@ -587,7 +588,7 @@ export const FileManagementPage: React.FC = () => {
   };
 
   // Handle permission update
-  const handlePermissionChange = async (fileId: number, isPublic: boolean) => {
+  const handlePermissionChange = async (fileId: EntityId, isPublic: boolean) => {
     try {
       await updateFilePermission(fileId, isPublic);
       message.success(isPublic ? 'File set to public' : 'File set to private');
@@ -597,7 +598,7 @@ export const FileManagementPage: React.FC = () => {
   };
 
   // Handle file copy
-  const handleCopy = async (fileId: number) => {
+  const handleCopy = async (fileId: EntityId) => {
     try {
       await copyFile(fileId);
       message.success('File copied successfully');

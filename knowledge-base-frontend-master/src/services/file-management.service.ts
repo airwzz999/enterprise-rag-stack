@@ -83,7 +83,7 @@ export const fileManagementService = {
   /**
    * Get file details
    */
-  getFileDetail: async (fileId: number): Promise<FileMetadata> => {
+  getFileDetail: async (fileId: EntityId): Promise<FileMetadata> => {
     const response = await http.get(`/document/file-management/detail/${fileId}`);
     return response;
   },
@@ -91,7 +91,7 @@ export const fileManagementService = {
   /**
    * Rename file
    */
-  renameFile: async (fileId: number, newFileName: string): Promise<boolean> => {
+  renameFile: async (fileId: EntityId, newFileName: string): Promise<boolean> => {
     const response = await http.put(`/document/file-management/rename/${fileId}`, null, {
       params: { newFileName },
     });
@@ -101,7 +101,7 @@ export const fileManagementService = {
   /**
    * Delete file
    */
-  deleteFile: async (fileId: number): Promise<boolean> => {
+  deleteFile: async (fileId: EntityId): Promise<boolean> => {
     const response = await http.delete(`/document/file-management/delete/${fileId}`);
     return response;
   },
@@ -109,7 +109,7 @@ export const fileManagementService = {
   /**
    * Batch delete files
    */
-  batchDeleteFiles: async (fileIds: number[]): Promise<number> => {
+  batchDeleteFiles: async (fileIds: EntityId[]): Promise<number> => {
     const response = await http.delete('/document/file-management/batch-delete', {
       data: fileIds,
     });
@@ -119,7 +119,7 @@ export const fileManagementService = {
   /**
    * Update file permission
    */
-  updateFilePermission: async (fileId: number, isPublic: boolean): Promise<boolean> => {
+  updateFilePermission: async (fileId: EntityId, isPublic: boolean): Promise<boolean> => {
     const response = await http.put(`/document/file-management/permission/${fileId}`, null, {
       params: { isPublic },
     });
@@ -129,7 +129,7 @@ export const fileManagementService = {
   /**
    * Download file
    */
-  downloadFile: async (fileId: number): Promise<boolean> => {
+  downloadFile: async (fileId: EntityId): Promise<boolean> => {
     const response = await http.post(`/document/file-management/download/${fileId}`);
     return response;
   },
@@ -145,7 +145,7 @@ export const fileManagementService = {
   /**
    * Copy file
    */
-  copyFile: async (fileId: number): Promise<FileMetadata> => {
+  copyFile: async (fileId: EntityId): Promise<FileMetadata> => {
     const response = await http.post(`/document/file-management/copy/${fileId}`);
     return response;
   },
@@ -164,7 +164,7 @@ export const fileManagementService = {
    * Get the HLS playback URL (kb-file service)
    * Note: this URL is requested directly by ReactPlayer, not via axios, so it needs the full path including the /api prefix
    */
-  getStreamUrl: (fileId: number): string => {
+  getStreamUrl: (fileId: EntityId): string => {
     return `/api/files/stream/${fileId}/master.m3u8`;
   },
 
@@ -172,21 +172,21 @@ export const fileManagementService = {
    * Get the media stream URL (kb-document proxy, for direct audio/video playback)
    * Note: this URL is requested directly by ReactPlayer, not via axios, so it needs the full path including the /api prefix
    */
-  getMediaStreamUrl: (fileId: number): string => {
+  getMediaStreamUrl: (fileId: EntityId): string => {
     return `/api/document/file-management/stream/${fileId}`;
   },
 
   /**
    * Get thumbnail URL
    */
-  getThumbnailUrl: (fileId: number): string => {
+  getThumbnailUrl: (fileId: EntityId): string => {
     return `/api/files/thumbnail/${fileId}`;
   },
 
   /**
    * Get PPTX slide images (Base64 PNG)
    */
-  getPptxSlideImages: async (fileId: number): Promise<string[]> => {
+  getPptxSlideImages: async (fileId: EntityId): Promise<string[]> => {
     const response = await http.get(`/document/file-management/preview/${fileId}/slides`);
     return response;
   },

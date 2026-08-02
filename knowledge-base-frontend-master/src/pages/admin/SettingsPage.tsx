@@ -18,7 +18,6 @@ import {
   Result,
   Divider,
   Statistic,
-  Tooltip,
   Popconfirm,
 } from 'antd';
 import { App } from 'antd';
@@ -186,7 +185,6 @@ export const SettingsPage: React.FC = () => {
     title: string,
     description: string,
     name: string,
-    formInstance: typeof basicForm,
   ) => (
     <div style={SWITCH_ITEM_STYLE}>
       <div style={{ flex: 1, paddingRight: 24 }}>
@@ -396,12 +394,12 @@ export const SettingsPage: React.FC = () => {
             <Text type="secondary" style={{ fontSize: 12 }}>Feature Toggles</Text>
           </Divider>
 
-          {renderSwitchItem('User Registration', 'Whether new users can register accounts on their own', 'allowRegistration', basicForm)}
-          {renderSwitchItem('Document Review', 'Whether newly published documents require review', 'requireApproval', basicForm)}
-          {renderSwitchItem('Comments', 'Whether users can comment on documents', 'enableComments', basicForm)}
-          {renderSwitchItem('AI Assistant', 'Enable the AI Q&A assistant feature', 'enableAI', basicForm)}
-          {renderSwitchItem('AI Writing', 'Enable the AI writing assistance feature', 'enableAIWriting', basicForm)}
-          {renderSwitchItem('Full-Text Search', 'Enable full-text document search', 'enableFullTextSearch', basicForm)}
+          {renderSwitchItem('User Registration', 'Whether new users can register accounts on their own', 'allowRegistration')}
+          {renderSwitchItem('Document Review', 'Whether newly published documents require review', 'requireApproval')}
+          {renderSwitchItem('Comments', 'Whether users can comment on documents', 'enableComments')}
+          {renderSwitchItem('AI Assistant', 'Enable the AI Q&A assistant feature', 'enableAI')}
+          {renderSwitchItem('AI Writing', 'Enable the AI writing assistance feature', 'enableAIWriting')}
+          {renderSwitchItem('Full-Text Search', 'Enable full-text document search', 'enableFullTextSearch')}
         </Form>
         {renderSaveBar(handleSaveBasic)}
       </Card>
@@ -475,9 +473,9 @@ export const SettingsPage: React.FC = () => {
             <Text type="secondary" style={{ fontSize: 12 }}>Security Toggles</Text>
           </Divider>
 
-          {renderSwitchItem('Two-Factor Authentication', 'Enable two-factor authentication (2FA) for users', 'enable2FA', securityForm)}
-          {renderSwitchItem('Login Restriction', 'Restrict login by IP address', 'ipRestriction', securityForm)}
-          {renderSwitchItem('Special Character Requirement', 'Passwords must contain special characters', 'requireSpecialChar', securityForm)}
+          {renderSwitchItem('Two-Factor Authentication', 'Enable two-factor authentication (2FA) for users', 'enable2FA')}
+          {renderSwitchItem('Login Restriction', 'Restrict login by IP address', 'ipRestriction')}
+          {renderSwitchItem('Special Character Requirement', 'Passwords must contain special characters', 'requireSpecialChar')}
         </Form>
         {renderSaveBar(handleSaveSecurity)}
       </Card>
@@ -486,10 +484,7 @@ export const SettingsPage: React.FC = () => {
 
   // ===================== STORAGE TAB =====================
   function renderStorageTab() {
-    const storage = settings?.storage;
     const status = settings?.status;
-    const maxSize = storage?.maxFileSize ?? 104857600;
-    const maxSizeMB = Math.round(maxSize / 1048576);
     const usedPercent = status ? Math.round((status.usedStorage / status.totalStorage) * 100) : 0;
 
     return (
@@ -674,8 +669,8 @@ export const SettingsPage: React.FC = () => {
             <Text type="secondary" style={{ fontSize: 12 }}>Notification Toggles</Text>
           </Divider>
 
-          {renderSwitchItem('Email Notifications', 'Enable email notifications', 'emailEnabled', notifForm)}
-          {renderSwitchItem('WebSocket Push', 'Enable real-time message push', 'websocketEnabled', notifForm)}
+          {renderSwitchItem('Email Notifications', 'Enable email notifications', 'emailEnabled')}
+          {renderSwitchItem('WebSocket Push', 'Enable real-time message push', 'websocketEnabled')}
 
           {enableEmail && (
             <div style={{ marginTop: 16 }}>

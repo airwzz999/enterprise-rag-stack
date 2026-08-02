@@ -13,16 +13,14 @@ import {
   Row,
   Col,
   Statistic,
-  DatePicker,
 } from 'antd';
 import { App } from 'antd';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { ColumnsType } from 'antd/es/table';
 import {
   FileTextOutlined,
   SearchOutlined,
   ReloadOutlined,
   DeleteOutlined,
-  EditOutlined,
   EyeOutlined,
   StarFilled,
   ClockCircleOutlined,
@@ -33,13 +31,12 @@ import {
   FileWordOutlined,
   FileExcelOutlined,
   FilePptOutlined,
-  FileOutlined,
   ThunderboltOutlined,
   BarChartOutlined,
   HeartOutlined,
 } from '@ant-design/icons';
 import { useFavoriteStore } from '@/stores';
-import { favoriteService, documentService } from '@/services';
+import { favoriteService } from '@/services';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
@@ -48,7 +45,6 @@ dayjs.extend(relativeTime);
 dayjs.locale('en');
 
 const { Search } = Input;
-const { RangePicker } = DatePicker;
 
 export const FavoritesPage: React.FC = () => {
   const { message } = App.useApp();
@@ -56,9 +52,7 @@ export const FavoritesPage: React.FC = () => {
   const {
     favoriteDocuments,
     isLoading,
-    toggleFavorite,
     loadFavorites,
-    isFavorited,
   } = useFavoriteStore();
 
   const [selectedFavorites, setSelectedFavorites] = useState<string[]>([]);
@@ -118,11 +112,6 @@ export const FavoritesPage: React.FC = () => {
       console.error('Failed to batch remove favorites:', error);
       message.error('Failed to remove favorites');
     }
-  };
-
-  // Edit document
-  const handleEdit = (documentId: string) => {
-    navigate(`/documents/${documentId}/edit`);
   };
 
   // View document

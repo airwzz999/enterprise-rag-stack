@@ -59,10 +59,11 @@ export const useUserStore = create<UserState>((set) => ({
   },
 
   updateUser: async (id: string, data: Partial<User>) => {
-    const updatedUser = await userService.updateUser(id, data);
+    // The backend only returns a success flag, not the updated user, so merge locally.
+    await userService.updateUser(id, data);
     set((state) => ({
-      users: state.users.map((u) => (u.id === id ? updatedUser : u)),
-      currentUser: state.currentUser?.id === id ? updatedUser : state.currentUser,
+      users: state.users.map((u) => (u.id === id ? { ...u, ...data } : u)),
+      currentUser: state.currentUser?.id === id ? { ...state.currentUser, ...data } : state.currentUser,
     }));
   },
 

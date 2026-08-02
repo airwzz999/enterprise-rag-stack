@@ -113,7 +113,7 @@ export const documentService = {
     const formData = new FormData();
     formData.append('file', file);
     // Use the postForm method to handle file upload
-    return (http as any).postForm<string>('/document/documents/upload', formData);
+    return (http as any).postForm('/document/documents/upload', formData);
   },
 
   // Upload a file and parse it to create a document

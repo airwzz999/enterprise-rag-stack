@@ -91,7 +91,6 @@ const formatPropertyValue = (key: string, value: any): string => {
 };
 type EChartsModule = typeof import('echarts');
 
-const ECHARTS_LOAD_FAIL_MESSAGE = 'Failed to load the graph rendering component. Switched to the default knowledge graph view.';
 const VALID_NODE_TYPES: NodeTypeKey[] = ['KnowledgeDocument', 'KnowledgeEntity', 'DocumentChunk'];
 
 const DEFAULT_GRAPH_DATA: KnowledgeGraphData = {
@@ -385,8 +384,6 @@ export const KnowledgeGraphPage: React.FC = () => {
         chartInstance.current = null;
       }
       setChartUnavailable(true);
-      setUsingDefaultData(true);
-      setGraphMessage((currentMessage) => currentMessage || ECHARTS_LOAD_FAIL_MESSAGE);
       return null;
     }
   }, []);

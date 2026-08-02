@@ -9,17 +9,15 @@ import {
   Tag,
   Tooltip,
   Dropdown,
-  Modal,
   Row,
   Col,
   Statistic,
   Select,
-  DatePicker,
   Popconfirm,
   Empty,
 } from 'antd';
 import { App } from 'antd';
-import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import type { ColumnsType } from 'antd/es/table';
 import {
   FileTextOutlined,
   SearchOutlined,
@@ -27,28 +25,24 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
-  StarOutlined,
   ClockCircleOutlined,
   FolderOutlined,
-  UserOutlined,
   FileMarkdownOutlined,
   FilePdfOutlined,
   FileWordOutlined,
   FileExcelOutlined,
   FilePptOutlined,
-  FileOutlined,
   ThunderboltOutlined,
   BarChartOutlined,
-  CheckCircleOutlined,
   ExclamationCircleOutlined,
   HistoryOutlined,
-  MoreOutlined,
   SortAscendingOutlined,
   UploadOutlined,
   SendOutlined,
 } from '@ant-design/icons';
 import { useAuthStore, useDocumentStore } from '@/stores';
 import { documentService, categoryService } from '@/services';
+import type { DocumentFilter } from '@/types';
 import { PERMISSIONS, hasPermission } from '@/utils/permission';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -58,7 +52,6 @@ dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
 
 const { Search } = Input;
-const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 export const DraftsPage: React.FC = () => {
@@ -71,7 +64,6 @@ export const DraftsPage: React.FC = () => {
     total,
     currentPage,
     pageSize,
-    filter,
     fetchDocuments,
     setFilter,
     reset,
@@ -80,7 +72,7 @@ export const DraftsPage: React.FC = () => {
   const [selectedDrafts, setSelectedDrafts] = useState<string[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>();
-  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [, setSearchKeyword] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('updatedAt');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const canCreateDocument = hasPermission(user, PERMISSIONS.documentCreate);
@@ -204,7 +196,7 @@ export const DraftsPage: React.FC = () => {
     }
     setSortBy(newSortBy);
     setSortOrder(newSortOrder);
-    fetchDocuments({ status: 0, page: 1, sortBy: newSortBy, sortOrder: newSortOrder });
+    fetchDocuments({ status: 0, page: 1, sortBy: newSortBy as DocumentFilter['sortBy'], sortOrder: newSortOrder });
   };
 
   // Refresh
@@ -345,7 +337,7 @@ export const DraftsPage: React.FC = () => {
       key: 'createdAt',
       width: '18%',
       sorter: true,
-      render: (date: string, record: any) => {
+      render: (date: string, _record: any) => {
         // Backend now consistently returns createdAt
         const createdDate = date;
         return (
@@ -364,7 +356,7 @@ export const DraftsPage: React.FC = () => {
       key: 'updatedAt',
       width: '15%',
       sorter: true,
-      render: (date: string, record: any) => {
+      render: (date: string, _record: any) => {
         // Backend now consistently returns updatedAt
         const updatedDate = date;
         return (

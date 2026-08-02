@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Dropdown, Badge, App, Select } from 'antd';
+import { Dropdown, Badge, App } from 'antd';
 import {
   DownOutlined, BellOutlined, CheckCircleOutlined, CloseCircleOutlined,
   InfoCircleOutlined, MessageOutlined, LikeOutlined,
@@ -45,7 +45,7 @@ const MainLayout: React.FC = () => {
   const { user, checkAuth, token } = useAuthStore();
   const { unreadCount, addNotification, fetchUnreadCount } = useNotificationStore();
   const { categoryTree, fetchCategoryTree } = useCategoryStore();
-  const { teamTree, selectedTeam, setSelectedTeam, fetchTeamTree } = useTeamStore();
+  const { teamTree, fetchTeamTree } = useTeamStore();
   const { notification } = App.useApp();
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

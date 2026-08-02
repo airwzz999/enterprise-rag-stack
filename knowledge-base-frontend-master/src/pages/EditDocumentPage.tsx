@@ -5,7 +5,6 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { Spin } from 'antd';
 import { App } from 'antd';
-import { useDocumentStore } from '@/stores/document.store';
 import { useAppStore } from '@/stores';
 import { categoryService, fileService, documentService, reviewService } from '@/services';
 import './CreateDocumentPage.css'; // Reuses CreateDocumentPage's styles
@@ -84,7 +83,6 @@ const EditDocumentPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
-  const { createDocument } = useDocumentStore();
   const { requireApproval, enableAIWriting, maxFileSize } = useAppStore();
   const isDirectPublish = !requireApproval;
 
@@ -211,6 +209,9 @@ const EditDocumentPage: React.FC = () => {
       console.log('🔗 API path: `/document/documents/${docId}`');
 
       const data = await documentService.getDocument(docId);
+      // The backend response includes fields (allowComment, visibility, numeric isPublic)
+      // beyond the declared Document type; read those through rawData.
+      const rawData = data as unknown as Record<string, unknown>;
       console.log('✅ Document loaded successfully, returned data:', data);
       console.log('📋 Data type check:', {
         titleType: typeof data.title,
@@ -219,7 +220,7 @@ const EditDocumentPage: React.FC = () => {
         tagsType: typeof data.tags,
         categoryIdType: typeof data.categoryId,
         statusType: typeof data.status,
-        allowCommentType: typeof data.allowComment,
+        allowCommentType: typeof rawData.allowComment,
         isPublicType: typeof data.isPublic,
         author: data.author,
         fullData: JSON.stringify(data, null, 2)
@@ -229,7 +230,7 @@ const EditDocumentPage: React.FC = () => {
       let processedTags: string[] = [];
       if (data.tags) {
         if (typeof data.tags === 'string') {
-          processedTags = data.tags.split(',').filter((tag: string) => tag.trim()).map(tag => tag.trim());
+          processedTags = (data.tags as string).split(',').filter((tag: string) => tag.trim()).map(tag => tag.trim());
         } else if (Array.isArray(data.tags)) {
           processedTags = data.tags;
         }
@@ -241,7 +242,7 @@ const EditDocumentPage: React.FC = () => {
       console.log('📁 Processed categoryId:', processedCategoryId, 'type:', typeof processedCategoryId);
 
       // Process the allowComment field - the backend returns a number (0 or 1)
-      const processedAllowComments = data.allowComment !== undefined ? data.allowComment === 1 : true;
+      const processedAllowComments = rawData.allowComment !== undefined ? rawData.allowComment === 1 : true;
       console.log('💬 Processed allowComments:', processedAllowComments);
 
       // Process the author info - the backend returns an AuthorVO object
@@ -275,9 +276,9 @@ const EditDocumentPage: React.FC = () => {
 
       // Process visibility - maps to the isPublic field
       // is_public: 1=visible to everyone (public), 0=visible to team (team)
-      const visibilityValue = data.isPublic !== undefined ?
-        (data.isPublic === 1 ? 'public' : 'team') :
-        (data.visibility || 'team');
+      const visibilityValue = rawData.isPublic !== undefined ?
+        (rawData.isPublic === 1 ? 'public' : 'team') :
+        ((rawData.visibility as string) || 'team');
       setVisibility(visibilityValue);
 
       // The teamId field does not exist in the database, set it to empty
@@ -459,21 +460,6 @@ const EditDocumentPage: React.FC = () => {
   };
 
   /**
-   * Upload a single image
-   */
-  const uploadSingleImage = async (imageUrl: string): Promise<string> => {
-    try {
-      console.log('Starting image upload:', imageUrl);
-      const response = await fileService.uploadFromUrl(imageUrl);
-      console.log('Image uploaded successfully:', imageUrl, '->', response.newUrl);
-      return response.newUrl;
-    } catch (error) {
-      console.error('Image upload failed:', imageUrl, error);
-      throw error;
-    }
-  };
-
-  /**
    * Handle double-click to select the whole line
    */
   const handleDoubleClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
@@ -522,7 +508,7 @@ const EditDocumentPage: React.FC = () => {
   /**
    * Handle mouse down event
    */
-  const handleMouseDown = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+  const handleMouseDown = (_e: React.MouseEvent<HTMLTextAreaElement>) => {
     console.log('🖱️ Mouse down'); // Debug log
     // Only hide the toolbar, without interfering with any default behavior
     setShowSelectionToolbar(false);
@@ -586,11 +572,6 @@ const EditDocumentPage: React.FC = () => {
     e.preventDefault();
     const textarea = e.target as HTMLTextAreaElement;
     if (!textarea) return;
-
-    // Check whether any text is selected
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const hasSelection = start !== end;
 
     setContextMenu({
       visible: true,
@@ -819,7 +800,6 @@ const EditDocumentPage: React.FC = () => {
    */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const ctrlOrCmd = e.ctrlKey || e.metaKey;
 
     // Ctrl/Cmd + Enter: save document
@@ -1113,7 +1093,7 @@ const EditDocumentPage: React.FC = () => {
    */
   const processContentChange = useRef(
     (() => {
-      let timeoutId: NodeJS.Timeout | null = null;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       return (newContent: string) => {
         if (timeoutId) {
           clearTimeout(timeoutId);
@@ -1351,7 +1331,7 @@ const EditDocumentPage: React.FC = () => {
         isPublic: visibility === 'public' ? 1 : 0,
       };
 
-      await documentService.updateDocument(String(documentId), documentData);
+      await documentService.updateDocument(String(documentId), documentData as any);
       await documentService.publishDocument(String(documentId));
       clearDraft();
       message.success('Document published!');
@@ -1388,7 +1368,7 @@ const EditDocumentPage: React.FC = () => {
       };
 
       console.log('Updating document draft, request data:', documentData);
-      const result = await documentService.updateDocument(String(documentId), documentData);
+      const result = await documentService.updateDocument(String(documentId), documentData as any);
       console.log('Document draft updated successfully, result:', result);
       clearDraft();
       message.success('Draft saved successfully!');
@@ -1437,7 +1417,7 @@ const EditDocumentPage: React.FC = () => {
       };
 
       console.log('Submitting for review, request data:', documentData);
-      await documentService.updateDocument(String(documentId), documentData);
+      await documentService.updateDocument(String(documentId), documentData as any);
       // Create a review record
       await reviewService.submitForReview(String(documentId));
       console.log('Review submission successful');
@@ -1559,17 +1539,18 @@ Summarize the core points of the document and action recommendations...
           alignItems: 'center',
           gap: '24px',
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            fontSize: '20px',
-            fontWeight: 700,
-            color: 'var(--primary-color)',
-            textDecoration: 'none',
-            cursor: 'pointer',
-            onClick: () => navigate('/'),
-          }}>
+          <div
+            onClick={() => navigate('/')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontSize: '20px',
+              fontWeight: 700,
+              color: 'var(--primary-color)',
+              textDecoration: 'none',
+              cursor: 'pointer',
+            }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>

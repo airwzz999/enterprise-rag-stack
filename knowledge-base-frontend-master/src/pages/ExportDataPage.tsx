@@ -175,9 +175,9 @@ const ExportDataPage: React.FC = () => {
               allowClear
               style={{ width: '100%' }}
               value={statusFilter}
-              onChange={(val) => {
+              onChange={(val: number | string) => {
                 // The "all" string also means no filtering, convert it to undefined
-                setStatusFilter(val === 'all' ? undefined : val);
+                setStatusFilter(val === 'all' ? undefined : (val as number));
                 setPagination((prev) => ({ ...prev, current: 1 }));
               }}
             >
