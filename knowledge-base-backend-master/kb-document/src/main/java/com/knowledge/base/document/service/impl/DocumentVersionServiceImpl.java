@@ -3,7 +3,9 @@ package com.knowledge.base.document.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.knowledge.base.common.enums.DocumentStatus;
 import com.knowledge.base.common.exception.BusinessException;
+import com.knowledge.base.common.exception.ForbiddenException;
 import com.knowledge.base.common.utils.SnowflakeIdGenerator;
 import com.knowledge.base.document.dto.DocumentVersionRestoreDTO;
 import com.knowledge.base.document.entity.Document;
@@ -12,6 +14,7 @@ import com.knowledge.base.document.mapper.DocumentMapper;
 import com.knowledge.base.document.mapper.DocumentVersionMapper;
 import com.knowledge.base.document.service.DocumentContentService;
 import com.knowledge.base.document.service.DocumentVersionService;
+import com.knowledge.base.document.utils.UserContext;
 import com.knowledge.base.document.vo.DocumentVersionVO;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -122,6 +126,8 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
             throw new BusinessException("Document does not exist");
         }
 
+        checkDraftAccess(document);
+
         // Paginated query of the version list
         Page<DocumentVersion> page = new Page<>(current, size);
         IPage<DocumentVersion> versionPage = documentVersionMapper.selectPage(
@@ -146,6 +152,11 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
             throw new BusinessException("Version does not exist");
         }
 
+        Document document = documentMapper.selectById(version.getDocumentId());
+        if (document != null) {
+            checkDraftAccess(document);
+        }
+
         return convertToVO(version);
     }
 
@@ -163,6 +174,8 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
         if (document == null) {
             throw new BusinessException("Document does not exist");
         }
+
+        checkDraftAccess(document);
 
         // Check whether the version exists
         DocumentVersion version = documentVersionMapper.selectById(restoreDTO.getVersionId());
@@ -208,6 +221,15 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
             throw new BusinessException("Version does not exist");
         }
 
+        if (!version1.getDocumentId().equals(version2.getDocumentId())) {
+            throw new BusinessException("Versions being compared must belong to the same document");
+        }
+
+        Document document = documentMapper.selectById(version1.getDocumentId());
+        if (document != null) {
+            checkDraftAccess(document);
+        }
+
         // Build the diff comparison result
         StringBuilder diff = new StringBuilder();
         diff.append("=== Version comparison ===\n");
@@ -251,6 +273,11 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
             throw new BusinessException("Version does not exist");
         }
 
+        Document document = documentMapper.selectById(version.getDocumentId());
+        if (document != null) {
+            checkDraftAccess(document);
+        }
+
         // Check whether this is the latest version
         Long count = documentVersionMapper.selectCount(
                 new LambdaQueryWrapper<DocumentVersion>()
@@ -265,6 +292,31 @@ public class DocumentVersionServiceImpl implements DocumentVersionService {
         // Delete the version
         int deleteCount = documentVersionMapper.deleteById(versionId);
         return deleteCount > 0;
+    }
+
+    /**
+     * Rejects access to another user's draft version history.
+     *
+     * <p>Mirrors DocumentServiceImpl#checkDraftAccess: document:version is a
+     * separately-assignable permission (not just super-admin, see
+     * sql/17_cleanup_role_user_permissions.sql), and a draft's version history,
+     * restore, and compare endpoints must respect the same author-only rule as
+     * the document itself, or a non-author holding that permission could read
+     * or overwrite someone else's in-progress draft via its version history.</p>
+     */
+    private void checkDraftAccess(Document document) {
+        if (!DocumentStatus.DRAFT.getCode().equals(document.getStatus())) {
+            return;
+        }
+        Long currentUserId;
+        try {
+            currentUserId = UserContext.getCurrentUserId();
+        } catch (IllegalStateException e) {
+            throw new ForbiddenException("This draft is only visible to its author");
+        }
+        if (!Objects.equals(document.getAuthorId(), currentUserId)) {
+            throw new ForbiddenException("This draft is only visible to its author");
+        }
     }
 
     /**
