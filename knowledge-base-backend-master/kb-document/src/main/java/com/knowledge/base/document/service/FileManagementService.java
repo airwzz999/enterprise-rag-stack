@@ -49,9 +49,10 @@ public interface FileManagementService extends IService<FileMetadata> {
      * Gets file details
      *
      * @param fileId file ID
+     * @param userId requesting user ID
      * @return file metadata
      */
-    FileMetadata getFileDetail(Long fileId);
+    FileMetadata getFileDetail(Long fileId, Long userId);
 
     /**
      * Renames a file
@@ -95,8 +96,9 @@ public interface FileManagementService extends IService<FileMetadata> {
      * Increments the download count
      *
      * @param fileId file ID
+     * @param userId requesting user ID
      */
-    void incrementDownloadCount(Long fileId);
+    void incrementDownloadCount(Long fileId, Long userId);
 
     /**
      * Updates the last access time
@@ -136,16 +138,18 @@ public interface FileManagementService extends IService<FileMetadata> {
      * Supports HTTP Range requests, returning 206 Partial Content for browser audio/video element playback
      *
      * @param fileId   file ID
+     * @param userId   requesting user ID
      * @param request  HTTP request (used to read the Range header)
      * @param response HTTP response
      */
-    void streamFile(Long fileId, HttpServletRequest request, HttpServletResponse response);
+    void streamFile(Long fileId, Long userId, HttpServletRequest request, HttpServletResponse response);
 
     /**
      * Renders each slide of a PPTX file into a PNG image (Base64-encoded)
      *
      * @param fileId file ID
+     * @param userId requesting user ID
      * @return list of data:image/png;base64 strings, one per slide
      */
-    List<String> getPptxSlideImages(Long fileId);
+    List<String> getPptxSlideImages(Long fileId, Long userId);
 }

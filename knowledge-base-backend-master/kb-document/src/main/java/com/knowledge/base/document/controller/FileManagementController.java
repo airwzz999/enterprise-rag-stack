@@ -113,8 +113,9 @@ public class FileManagementController {
             @Parameter(description = "File ID", required = true)
             @PathVariable("fileId") Long fileId) {
 
-        log.info("Get file details request: fileId={}", fileId);
-        FileMetadata metadata = fileManagementService.getFileDetail(fileId);
+        Long userId = UserContext.getCurrentUserId();
+        log.info("Get file details request: fileId={}, userId={}", fileId, userId);
+        FileMetadata metadata = fileManagementService.getFileDetail(fileId, userId);
         return Result.success(convertToVO(metadata));
     }
 
@@ -217,8 +218,9 @@ public class FileManagementController {
             @Parameter(description = "File ID", required = true)
             @PathVariable("fileId") Long fileId) {
 
-        log.info("Download file request: fileId={}", fileId);
-        fileManagementService.incrementDownloadCount(fileId);
+        Long userId = UserContext.getCurrentUserId();
+        log.info("Download file request: fileId={}, userId={}", fileId, userId);
+        fileManagementService.incrementDownloadCount(fileId, userId);
         return Result.success("Downloaded successfully", true);
     }
 
@@ -273,8 +275,9 @@ public class FileManagementController {
             jakarta.servlet.http.HttpServletRequest request,
             jakarta.servlet.http.HttpServletResponse response) {
 
-        log.info("Stream file request: fileId={}", fileId);
-        fileManagementService.streamFile(fileId, request, response);
+        Long userId = UserContext.getCurrentUserId();
+        log.info("Stream file request: fileId={}, userId={}", fileId, userId);
+        fileManagementService.streamFile(fileId, userId, request, response);
     }
 
     @GetMapping("/preview/{fileId}/slides")
@@ -284,8 +287,9 @@ public class FileManagementController {
             @Parameter(description = "File ID", required = true)
             @PathVariable("fileId") Long fileId) {
 
-        log.info("Get PPTX slide images request: fileId={}", fileId);
-        List<String> slideImages = fileManagementService.getPptxSlideImages(fileId);
+        Long userId = UserContext.getCurrentUserId();
+        log.info("Get PPTX slide images request: fileId={}, userId={}", fileId, userId);
+        List<String> slideImages = fileManagementService.getPptxSlideImages(fileId, userId);
         return Result.success(slideImages);
     }
 

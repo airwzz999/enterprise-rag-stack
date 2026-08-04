@@ -5,6 +5,7 @@ import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.knowledge.base.common.exception.BusinessException;
+import com.knowledge.base.common.exception.ForbiddenException;
 import com.knowledge.base.common.utils.SnowflakeIdGenerator;
 import com.knowledge.base.document.entity.FileMetadata;
 import com.knowledge.base.document.mapper.FileMetadataMapper;
@@ -165,16 +166,30 @@ public class FileManagementServiceImpl extends ServiceImpl<FileMetadataMapper, F
     }
 
     @Override
-    public FileMetadata getFileDetail(Long fileId) {
-        log.info("Get file details: fileId={}", fileId);
+    public FileMetadata getFileDetail(Long fileId, Long userId) {
+        log.info("Get file details: fileId={}, userId={}", fileId, userId);
         FileMetadata metadata = fileMetadataMapper.selectById(fileId);
         if (metadata == null) {
             throw new BusinessException("File does not exist");
         }
+        checkReadAccess(metadata, userId);
 
         // Update the last access time
         updateLastAccessTime(fileId);
         return metadata;
+    }
+
+    /**
+     * Checks whether the requesting user may read this file: public files are
+     * readable by anyone authenticated, otherwise only the uploader may access it.
+     */
+    private void checkReadAccess(FileMetadata metadata, Long userId) {
+        if (Boolean.TRUE.equals(metadata.getIsPublic())) {
+            return;
+        }
+        if (userId == null || !userId.equals(metadata.getUploaderId())) {
+            throw new ForbiddenException("No permission to access this file");
+        }
     }
 
     @Override
@@ -264,10 +279,11 @@ public class FileManagementServiceImpl extends ServiceImpl<FileMetadataMapper, F
     }
 
     @Override
-    public void incrementDownloadCount(Long fileId) {
-        log.info("Increment download count: fileId={}", fileId);
+    public void incrementDownloadCount(Long fileId, Long userId) {
+        log.info("Increment download count: fileId={}, userId={}", fileId, userId);
         FileMetadata metadata = fileMetadataMapper.selectById(fileId);
         if (metadata != null) {
+            checkReadAccess(metadata, userId);
             Integer count = metadata.getDownloadCount();
             metadata.setDownloadCount(count == null ? 1 : count + 1);
             fileMetadataMapper.updateById(metadata);
@@ -328,6 +344,7 @@ public class FileManagementServiceImpl extends ServiceImpl<FileMetadataMapper, F
         if (original == null) {
             throw new BusinessException("File does not exist");
         }
+        checkReadAccess(original, userId);
 
         // Create the copy
         FileMetadata copy = new FileMetadata();
@@ -440,11 +457,12 @@ public class FileManagementServiceImpl extends ServiceImpl<FileMetadataMapper, F
     }
 
     @Override
-    public void streamFile(Long fileId, HttpServletRequest request, HttpServletResponse response) {
+    public void streamFile(Long fileId, Long userId, HttpServletRequest request, HttpServletResponse response) {
         FileMetadata metadata = fileMetadataMapper.selectById(fileId);
         if (metadata == null) {
             throw new BusinessException("File does not exist");
         }
+        checkReadAccess(metadata, userId);
 
         String accessUrl = metadata.getAccessUrl();
         if (accessUrl == null || accessUrl.isEmpty()) {
@@ -610,13 +628,14 @@ public class FileManagementServiceImpl extends ServiceImpl<FileMetadataMapper, F
     }
 
     @Override
-    public List<String> getPptxSlideImages(Long fileId) {
-        log.info("Render PPTX slides: fileId={}", fileId);
+    public List<String> getPptxSlideImages(Long fileId, Long userId) {
+        log.info("Render PPTX slides: fileId={}, userId={}", fileId, userId);
 
         FileMetadata metadata = fileMetadataMapper.selectById(fileId);
         if (metadata == null) {
             throw new BusinessException("File does not exist");
         }
+        checkReadAccess(metadata, userId);
 
         String accessUrl = metadata.getAccessUrl();
         if (accessUrl == null || accessUrl.isEmpty()) {
