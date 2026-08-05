@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -162,6 +163,7 @@ public class GraphController {
      * @return the operation result
      */
     @DeleteMapping("/document/{docId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Delete document graph", description = "Delete the knowledge graph nodes and relationships for the specified document")
     public Result<String> deleteDocumentGraph(
             @Parameter(description = "Document ID", required = true) @PathVariable Long docId) {
@@ -179,6 +181,7 @@ public class GraphController {
      * @return the cleanup result
      */
     @PostMapping("/document/cleanup")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Clean up orphaned graph nodes", description = "Delete graph nodes corresponding to documents that no longer exist in MySQL")
     public Result<String> cleanupGhostNodes(@RequestBody Map<String, List<Long>> body) {
         List<Long> validDocIds = body.get("validDocIds");
@@ -196,6 +199,7 @@ public class GraphController {
      * @return the operation result
      */
     @PostMapping("/cache/evict")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Clear graph cache", description = "Clear all knowledge graph Redis cache entries, forcing a reload from Neo4j")
     public Result<String> evictCache() {
         log.info("Clear graph cache request");
