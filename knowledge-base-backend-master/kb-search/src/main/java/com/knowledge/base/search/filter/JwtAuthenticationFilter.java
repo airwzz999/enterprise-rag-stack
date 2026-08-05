@@ -133,10 +133,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
+    /**
+     * userId 0 is the sentinel that {@code InternalFeignConfig} (in kb-document) sends
+     * for service-to-service calls - e.g. syncing a document into the search index on
+     * create/update/publish. The gateway strips any client-supplied X-User-Id on every
+     * request before setting its own (see {@code AuthGlobalFilter}), so an external
+     * caller can never inject this header - only another internal service reaching
+     * kb-search directly can. Granting it ROLE_ADMIN lets {@code @PreAuthorize} restrict
+     * {@code SearchController}'s index-management endpoints (which write/delete
+     * arbitrary entries in the shared search index) to admins/internal callers without
+     * breaking that internal flow.
+     */
+    private static final long INTERNAL_SERVICE_USER_ID = 0L;
+
     private void setDefaultSecurityContext(Long userId, String token, HttpServletRequest request) {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+        if (INTERNAL_SERVICE_USER_ID == userId) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
+
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userId, token,
-                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+                new UsernamePasswordAuthenticationToken(userId, token, authorities);
         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }

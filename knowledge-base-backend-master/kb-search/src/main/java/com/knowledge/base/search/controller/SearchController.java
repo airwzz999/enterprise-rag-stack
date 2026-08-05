@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -108,8 +109,13 @@ public class SearchController {
 
     /**
      * Rebuild the index
+     *
+     * <p>Drops and recreates the whole ES index - restricted to admins, since any
+     * authenticated user being able to trigger this is a denial-of-service risk against
+     * search for every user.</p>
      */
     @PostMapping("/index/rebuild")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Rebuild index", description = "Rebuild the search index")
     public Result<String> rebuildIndex() {
         searchService.rebuildIndex();
@@ -119,10 +125,16 @@ public class SearchController {
     /**
      * Index a document (for internal use by kb-document)
      *
+     * <p>Writes the caller-supplied map directly into the shared search index with no
+     * validation of its fields, so it must not be reachable by ordinary authenticated
+     * users - otherwise any user could inject fake documents or overwrite another
+     * document's indexed content/links for everyone's search results.</p>
+     *
      * @param docData the document data
      * @return whether it succeeded
      */
     @PostMapping("/index/document")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Index document", description = "Index document data directly into ES (internal call from kb-document)")
     public Result<Boolean> indexDocument(@RequestBody Map<String, Object> docData) {
         searchService.indexDocumentData(docData);
@@ -136,6 +148,7 @@ public class SearchController {
      * @return whether it succeeded
      */
     @DeleteMapping("/index/document/{documentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Delete document index", description = "Delete the document index from ES (internal call from kb-document)")
     public Result<Boolean> deleteDocumentIndex(@PathVariable Long documentId) {
         searchService.deleteDocument(documentId);
