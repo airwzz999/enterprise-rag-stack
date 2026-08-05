@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -16,6 +17,10 @@ import org.springframework.web.bind.annotation.*;
  *
  * <p>Provides document indexing management APIs: single-document indexing, batch
  * indexing, full rebuild, and progress queries.</p>
+ *
+ * <p>The mutating endpoints here operate knowledge-base-wide (full reindex, index
+ * deletion for an arbitrary document) rather than on any resource the caller owns,
+ * so they are restricted to admins rather than gated by per-resource ownership.</p>
  *
  * @author airwzz999
  * @since 1.0.0
@@ -33,6 +38,7 @@ public class RagReindexController {
      * Reindex a single document
      */
     @PostMapping("/{docId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Reindex a single document", description = "Re-chunk, re-embed, and reindex the specified document")
     public Result<String> reindexByDoc(@PathVariable Long docId) {
         log.info("Reindexing document: documentId={}", docId);
@@ -44,6 +50,7 @@ public class RagReindexController {
      * Batch-reindex documents
      */
     @PostMapping("/batch")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Batch-reindex documents", description = "Re-chunk, re-embed, and reindex the specified documents")
     public Result<String> reindexBatch(@Valid @RequestBody ReindexRequestDTO dto) {
         log.info("Batch-reindexing documents: count={}", dto.getDocumentIds().size());
@@ -55,6 +62,7 @@ public class RagReindexController {
      * Reindex all documents
      */
     @PostMapping("/all")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Reindex all documents", description = "Re-chunk, re-embed, and reindex all published documents")
     public Result<String> reindexAll() {
         log.info("Fully reindexing documents");
@@ -66,6 +74,7 @@ public class RagReindexController {
      * Delete the vector index for a single document
      */
     @DeleteMapping("/{docId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Delete a single document's vector index", description = "Delete all chunks for the specified document from the ES vector store")
     public Result<String> deleteByDoc(@PathVariable Long docId) {
         log.info("Deleting document vector index: documentId={}", docId);

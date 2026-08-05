@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,12 +19,17 @@ import java.util.List;
  * contains no business logic and only handles parameter extraction and delegation
  * to the service layer.</p>
  *
+ * <p>Every endpoint here operates knowledge-base-wide (full rebuild, or delete of an
+ * arbitrary document's graph) rather than on a resource the caller owns, so the whole
+ * controller is restricted to admins.</p>
+ *
  * @author airwzz999
  * @since 1.0.0
  */
 @Slf4j
 @RestController
 @RequestMapping("/kag/build")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 @Tag(name = "KAG Graph Management", description = "Knowledge graph build and index management APIs")
 public class KAGReindexController {
 
