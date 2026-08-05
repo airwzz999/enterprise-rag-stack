@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -178,6 +179,7 @@ public class StatisticsController {
      * @return the admin overview data
      */
     @GetMapping("/admin-overview")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Admin overview", description = "Get key metrics for the admin dashboard")
     public Result<AdminOverviewVO> getAdminOverview() {
         log.info("Get admin overview request");
