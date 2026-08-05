@@ -129,9 +129,16 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
 
     /** {@inheritDoc} */
     @Override
-    public Notification getNotificationById(Long id) {
-        log.info("Query notification details: id={}", id);
-        return notificationMapper.selectById(id);
+    public Notification getNotificationById(Long id, Long userId) {
+        log.info("Query notification details: id={}, userId={}", id, userId);
+        Notification notification = notificationMapper.selectById(id);
+        if (notification == null) {
+            throw new BusinessException("Notification does not exist");
+        }
+        if (!notification.getUserId().equals(userId)) {
+            throw new BusinessException("No permission to access this notification");
+        }
+        return notification;
     }
 
     /** {@inheritDoc} */
@@ -158,8 +165,8 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     /** {@inheritDoc} */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<Boolean> markAsRead(Long id) {
-        log.info("Mark notification as read: notificationId={}", id);
+    public Result<Boolean> markAsRead(Long id, Long userId) {
+        log.info("Mark notification as read: notificationId={}, userId={}", id, userId);
 
         if (id == null) {
             throw new BusinessException("Notification ID must not be empty");
@@ -168,6 +175,9 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
         Notification notification = notificationMapper.selectById(id);
         if (notification == null) {
             throw new BusinessException("Notification does not exist");
+        }
+        if (!notification.getUserId().equals(userId)) {
+            throw new BusinessException("No permission to modify this notification");
         }
 
         LambdaUpdateWrapper<Notification> updateWrapper = new LambdaUpdateWrapper<>();
@@ -203,11 +213,19 @@ public class NotificationServiceImpl extends ServiceImpl<NotificationMapper, Not
     /** {@inheritDoc} */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Result<Boolean> deleteNotification(Long id) {
-        log.info("Delete notification: notificationId={}", id);
+    public Result<Boolean> deleteNotification(Long id, Long userId) {
+        log.info("Delete notification: notificationId={}, userId={}", id, userId);
 
         if (id == null) {
             throw new BusinessException("Notification ID must not be empty");
+        }
+
+        Notification notification = notificationMapper.selectById(id);
+        if (notification == null) {
+            throw new BusinessException("Notification does not exist");
+        }
+        if (!notification.getUserId().equals(userId)) {
+            throw new BusinessException("No permission to delete this notification");
         }
 
         int count = notificationMapper.deleteById(id);

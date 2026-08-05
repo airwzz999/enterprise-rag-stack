@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,12 +22,19 @@ import java.util.List;
  * <p>Designed according to the Alibaba Java Development Guidelines; provides
  * dictionary management endpoints</p>
  *
+ * <p>Admin-only: dictionary entries are shared, system-wide lookup data (used to
+ * populate dropdowns/enums across the app), and only the admin dictionary-management
+ * page ({@code admin/dictionary}, gated {@code requireAdmin} in the frontend) uses this
+ * API, so any authenticated user being able to create/edit/delete entries directly
+ * would let them corrupt shared data for everyone.</p>
+ *
  * @author airwzz999
  * @since 1.0.0
  */
 @Slf4j
 @RestController
 @RequestMapping("/dicts")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 @Tag(name = "Dictionary Management", description = "Dictionary data management endpoints")
 public class DictController {
 

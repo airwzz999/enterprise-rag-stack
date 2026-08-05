@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -20,12 +21,18 @@ import org.springframework.web.bind.annotation.*;
  * section; the frontend SettingsPage uses this endpoint to load and save each
  * section's settings.</p>
  *
+ * <p>Admin-only: this exposes/updates system-wide configuration (mail, storage,
+ * security policy, etc.) and can clear caches or trigger a full data backup, so it must
+ * not be reachable by ordinary users. The frontend already gates {@code admin/settings}
+ * behind {@code requireAdmin}; this mirrors that server-side.</p>
+ *
  * @author airwzz999
  * @since 1.0.0
  */
 @Slf4j
 @RestController
 @RequestMapping("/config/settings")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 @Tag(name = "System Settings", description = "System settings section management endpoints")
 public class SettingsController {
 

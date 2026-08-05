@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,12 @@ import java.util.List;
  *
  * <p>Designed according to the Alibaba Java Development Guidelines; provides
  * system configuration management endpoints</p>
+ *
+ * <p>Admin-only, except {@link #getPublicConfigs()}: {@code /config/public} is
+ * intentionally open (permitted anonymously in {@code SecurityConfig} - needed by the
+ * login/register pages before authentication). Every other endpoint here reads or
+ * mutates system-wide config and is gated to admins, mirroring the frontend's
+ * {@code admin/system-config} route, which is {@code requireAdmin}-gated.</p>
  *
  * @author airwzz999
  * @since 1.0.0
@@ -41,6 +48,7 @@ public class SystemConfigController {
      * @return paginated config information
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Paginated query of configs", description = "Paginated query of the system configuration list")
     public Result<IPage<SystemConfig>> pageConfigs(
         @Parameter(description = "Current page") @RequestParam(defaultValue = "1") Long current,
@@ -59,6 +67,7 @@ public class SystemConfigController {
      * @return config information
      */
     @GetMapping("/{key}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Query config item", description = "Query a config item by config key")
     public Result<SystemConfig> getConfigByKey(
         @Parameter(description = "Config key", required = true)
@@ -76,6 +85,7 @@ public class SystemConfigController {
      * @return whether it succeeded
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Create config", description = "Create a new system config")
     public Result<Boolean> createConfig(@Valid @RequestBody SystemConfig config) {
         log.info("Create config request: key={}", config.getConfigKey());
@@ -92,6 +102,7 @@ public class SystemConfigController {
      * @return whether it succeeded
      */
     @PutMapping("/{key}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Update config", description = "Update a system config")
     public Result<Boolean> updateConfig(
         @Parameter(description = "Config key", required = true)
@@ -110,6 +121,7 @@ public class SystemConfigController {
      * @return whether it succeeded
      */
     @DeleteMapping("/{key}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Delete config", description = "Delete a config by config key")
     public Result<Boolean> deleteConfig(
         @Parameter(description = "Config key", required = true)
@@ -127,6 +139,7 @@ public class SystemConfigController {
      * @return config list
      */
     @GetMapping("/category/{category}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Get configs by category", description = "Get the config list by config category")
     public Result<List<SystemConfig>> getConfigsByCategory(
         @Parameter(description = "Config category", required = true)

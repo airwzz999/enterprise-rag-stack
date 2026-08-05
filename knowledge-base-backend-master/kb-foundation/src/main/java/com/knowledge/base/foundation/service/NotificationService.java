@@ -45,10 +45,11 @@ public interface NotificationService {
     /**
      * Get a notification by ID
      *
-     * @param id notification ID
+     * @param id     notification ID
+     * @param userId caller's user ID; the notification must belong to this user
      * @return notification information
      */
-    Notification getNotificationById(Long id);
+    Notification getNotificationById(Long id, Long userId);
 
     /**
      * Send a notification (entity-based, for internal calls)
@@ -61,10 +62,11 @@ public interface NotificationService {
     /**
      * Mark a notification as read
      *
-     * @param id notification ID
+     * @param id     notification ID
+     * @param userId caller's user ID; the notification must belong to this user
      * @return whether it succeeded
      */
-    Result<Boolean> markAsRead(Long id);
+    Result<Boolean> markAsRead(Long id, Long userId);
 
     /**
      * Mark all notifications as read
@@ -77,10 +79,11 @@ public interface NotificationService {
     /**
      * Delete a notification
      *
-     * @param id notification ID
+     * @param id     notification ID
+     * @param userId caller's user ID; the notification must belong to this user
      * @return whether it succeeded
      */
-    Result<Boolean> deleteNotification(Long id);
+    Result<Boolean> deleteNotification(Long id, Long userId);
 
     /**
      * Get the unread notification count

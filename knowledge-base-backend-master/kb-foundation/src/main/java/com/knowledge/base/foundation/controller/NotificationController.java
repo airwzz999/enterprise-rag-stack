@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -40,14 +41,16 @@ public class NotificationController {
     public Result<Notification> getNotificationById(
         @Parameter(description = "Notification ID", required = true)
         @PathVariable Long id) {
-        log.info("Query notification details request: id={}", id);
+        Long userId = UserContextUtil.getUserId();
+        log.info("Query notification details request: id={}, userId={}", id, userId);
 
-        Notification notification = notificationService.getNotificationById(id);
+        Notification notification = notificationService.getNotificationById(id, userId);
         return Result.success(notification);
     }
 
     @PostMapping
-    @Operation(summary = "Send notification", description = "Create a new notification")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Send notification", description = "Create a new notification addressed to an arbitrary user (admin-only; the real user-triggered notification pipeline runs over MQ via ReviewNotificationListener)")
     public Result<Boolean> sendNotification(@Valid @RequestBody Notification notification) {
         log.info("Send notification request: userId={}, title={}", notification.getUserId(), notification.getTitle());
 
@@ -60,9 +63,10 @@ public class NotificationController {
     public Result<Boolean> markAsRead(
         @Parameter(description = "Notification ID", required = true)
         @PathVariable Long id) {
-        log.info("Mark notification as read request: id={}", id);
+        Long userId = UserContextUtil.getUserId();
+        log.info("Mark notification as read request: id={}, userId={}", id, userId);
 
-        return notificationService.markAsRead(id);
+        return notificationService.markAsRead(id, userId);
     }
 
     @PutMapping("/read-all")
@@ -79,9 +83,10 @@ public class NotificationController {
     public Result<Boolean> deleteNotification(
         @Parameter(description = "Notification ID", required = true)
         @PathVariable Long id) {
-        log.info("Delete notification request: id={}", id);
+        Long userId = UserContextUtil.getUserId();
+        log.info("Delete notification request: id={}, userId={}", id, userId);
 
-        return notificationService.deleteNotification(id);
+        return notificationService.deleteNotification(id, userId);
     }
 
     @GetMapping("/unread-count")

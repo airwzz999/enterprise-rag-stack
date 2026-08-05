@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -21,12 +22,19 @@ import java.util.Map;
  * <p>Designed according to the Alibaba Java Development Guidelines; provides
  * operation log management endpoints</p>
  *
+ * <p>Admin-only: this is the org-wide audit trail (every user's actions), and
+ * {@code deleteLogsBeforeDate} can purge history outright, so letting any
+ * authenticated user reach this would leak everyone's activity and let a low-privileged
+ * user erase evidence of their own actions. The frontend already gates
+ * {@code admin/operation-logs} behind {@code requireAdmin}; this mirrors that server-side.</p>
+ *
  * @author airwzz999
  * @since 1.0.0
  */
 @Slf4j
 @RestController
 @RequestMapping("/logs")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 @Tag(name = "Operation Log Management", description = "Operation log management endpoints")
 public class OperationLogController {
 

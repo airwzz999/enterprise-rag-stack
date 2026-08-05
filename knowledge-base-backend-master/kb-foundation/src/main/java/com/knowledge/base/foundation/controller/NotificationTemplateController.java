@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +18,18 @@ import java.util.List;
 /**
  * Notification template management Controller
  *
+ * <p>Admin-only: templates are used to render notifications sent system-wide, so
+ * letting any authenticated user edit them would be a stored-content/phishing vector.
+ * The frontend already gates {@code admin/notification-templates} behind
+ * {@code requireAdmin}; this mirrors that on the server side.</p>
+ *
  * @author airwzz999
  * @since 1.0.0
  */
 @Slf4j
 @RestController
 @RequestMapping("/notifications/templates")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 @Tag(name = "Notification Template Management", description = "Notification template management endpoints")
 public class NotificationTemplateController {
 
