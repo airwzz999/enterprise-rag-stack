@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -41,6 +42,7 @@ public class UserController {
      * @return user ID
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Create user", description = "Create a new user")
     public Result<Long> createUser(@Valid @RequestBody UserDTO userDTO) {
         log.info("Create user request: username={}", userDTO.getUsername());
@@ -56,6 +58,7 @@ public class UserController {
      * @return whether successful
      */
     @PutMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Update user", description = "Update user information")
     public Result<Boolean> updateUser(@Valid @RequestBody UserDTO userDTO) {
         log.info("Update user request: userId={}", userDTO.getId());
@@ -71,6 +74,7 @@ public class UserController {
      * @return whether successful
      */
     @DeleteMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Delete user", description = "Delete a user by ID")
     public Result<Boolean> deleteUser(
         @Parameter(description = "User ID", required = true)
@@ -88,6 +92,7 @@ public class UserController {
      * @return user information
      */
     @GetMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Query user", description = "Query user information by ID")
     public Result<UserVO> getUserById(
         @Parameter(description = "User ID", required = true)
@@ -109,6 +114,7 @@ public class UserController {
      * @return paginated user information
      */
     @GetMapping("/page")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Paginated user query", description = "Query the user list with pagination")
     public Result<IPage<UserVO>> pageUsers(
         @Parameter(description = "Current page") @RequestParam(defaultValue = "1") Long current,
@@ -130,6 +136,7 @@ public class UserController {
      * @return whether successful
      */
     @PutMapping("/{userId}/password/reset")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Reset password", description = "Administrator resets a user's password")
     public Result<Boolean> resetPassword(
         @Parameter(description = "User ID", required = true)
@@ -170,6 +177,7 @@ public class UserController {
      * @return whether successful
      */
     @PostMapping("/{userId}/roles")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Assign roles", description = "Assign roles to a user")
     public Result<Boolean> assignRoles(
         @Parameter(description = "User ID", required = true)
@@ -189,6 +197,7 @@ public class UserController {
      * @return role ID list
      */
     @GetMapping("/{userId}/roles")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Get user roles", description = "Get the roles assigned to a user")
     public Result<List<Long>> getUserRoles(
         @Parameter(description = "User ID", required = true)
@@ -207,6 +216,7 @@ public class UserController {
      * @return whether successful
      */
     @PostMapping("/{userId}/permissions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Assign permissions", description = "Assign permissions directly to a user (not via a role)")
     public Result<Boolean> assignPermissions(
         @Parameter(description = "User ID", required = true)
@@ -226,6 +236,7 @@ public class UserController {
      * @return permission code list
      */
     @GetMapping("/{userId}/permissions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Get user permissions", description = "Get all of a user's permissions (including role-based and directly assigned permissions)")
     public Result<List<String>> getUserPermissions(
         @Parameter(description = "User ID", required = true)
