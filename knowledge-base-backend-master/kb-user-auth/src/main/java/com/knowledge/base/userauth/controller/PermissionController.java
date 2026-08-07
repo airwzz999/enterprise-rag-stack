@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/permissions")
 @Tag(name = "Permission Management", description = "Permission information management endpoints")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
 public class PermissionController {
 
     @Resource
