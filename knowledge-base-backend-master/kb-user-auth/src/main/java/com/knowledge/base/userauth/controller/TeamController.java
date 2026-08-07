@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class TeamController {
      * Create a team
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Create team", description = "Create a new team")
     @OperationLog(module = "Team Management", operation = "Create Team", description = "Create a new team")
     public Result<Long> createTeam(@Valid @RequestBody TeamCreateDTO dto) {
@@ -48,6 +50,7 @@ public class TeamController {
      * Update a team
      */
     @PutMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Update team", description = "Update team information")
     @OperationLog(module = "Team Management", operation = "Update Team", description = "Update team information")
     public Result<Boolean> updateTeam(@Valid @RequestBody TeamUpdateDTO dto) {
@@ -59,6 +62,7 @@ public class TeamController {
      * Delete a team
      */
     @DeleteMapping("/{teamId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Delete team", description = "Delete the specified team")
     @OperationLog(module = "Team Management", operation = "Delete Team", description = "Delete a team")
     public Result<Boolean> deleteTeam(@PathVariable Long teamId) {
@@ -100,6 +104,7 @@ public class TeamController {
      * Add team members
      */
     @PostMapping("/{teamId}/members")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Add team members", description = "Batch add team members")
     @OperationLog(module = "Team Management", operation = "Add Members", description = "Add team members")
     public Result<Boolean> addTeamMembers(
@@ -113,6 +118,7 @@ public class TeamController {
      * Remove team members
      */
     @DeleteMapping("/{teamId}/members")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Remove team members", description = "Batch remove team members")
     @OperationLog(module = "Team Management", operation = "Remove Members", description = "Remove team members")
     public Result<Boolean> removeTeamMembers(
