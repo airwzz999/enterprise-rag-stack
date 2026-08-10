@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public class CategoryController {
      */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Create category", description = "Create a new file category")
     public Result<CategoryVO> create(@Valid @RequestBody CategoryDTO dto) {
         log.info("Create category request: {}", dto.getName());
@@ -46,6 +48,7 @@ public class CategoryController {
      * Update a category
      */
     @PutMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Update category", description = "Update the information of the specified category")
     public Result<CategoryVO> update(@Valid @RequestBody CategoryDTO dto) {
         log.info("Update category request: id={}", dto.getId());
@@ -57,6 +60,7 @@ public class CategoryController {
      * Delete a category
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Delete category", description = "Delete the specified category (child categories must be deleted first)")
     public Result<Void> delete(@Parameter(description = "Category ID") @PathVariable Long id) {
         log.info("Delete category request: id={}", id);
@@ -109,6 +113,7 @@ public class CategoryController {
      * Enable a category
      */
     @PutMapping("/{id}/enable")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Enable category", description = "Set the specified category to enabled status")
     public Result<CategoryVO> enable(@Parameter(description = "Category ID") @PathVariable Long id) {
         log.info("Enable category request: id={}", id);
@@ -120,6 +125,7 @@ public class CategoryController {
      * Disable a category
      */
     @PutMapping("/{id}/disable")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Disable category", description = "Set the specified category to disabled status")
     public Result<CategoryVO> disable(@Parameter(description = "Category ID") @PathVariable Long id) {
         log.info("Disable category request: id={}", id);
