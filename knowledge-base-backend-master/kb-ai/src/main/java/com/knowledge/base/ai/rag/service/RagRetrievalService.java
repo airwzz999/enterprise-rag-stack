@@ -20,7 +20,9 @@ public interface RagRetrievalService {
      * @param query        query text
      * @param topK         top K results to return
      * @param enableRerank whether LLM reranking is enabled
+     * @param userId       the requesting user's ID, used to scope results to documents they
+     *                     can see (public or authored by them); null means public-only
      * @return the list of retrieval results
      */
-    List<RagSearchResultVO> retrieve(String query, int topK, boolean enableRerank);
+    List<RagSearchResultVO> retrieve(String query, int topK, boolean enableRerank, Long userId);
 }

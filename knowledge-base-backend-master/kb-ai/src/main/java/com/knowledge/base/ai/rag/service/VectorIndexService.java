@@ -38,10 +38,12 @@ public interface VectorIndexService {
      * @param topK               top K results to return
      * @param hybridTopK         number of candidates returned by each of BM25 and kNN
      * @param rrfC               RRF constant
+     * @param userId             the requesting user's ID; results are scoped to chunks whose
+     *                           document is public or authored by this user (null means public-only)
      * @return the fused and ranked search results
      */
     List<RagSearchResultVO> searchHybrid(String queryText, float[] queryEmbedding,
-                                          int topK, int hybridTopK, int rrfC);
+                                          int topK, int hybridTopK, int rrfC, Long userId);
 
     /**
      * Check whether the kb_chunk index exists

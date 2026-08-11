@@ -43,11 +43,11 @@ public class HybridRetrievalServiceImpl implements HybridRetrievalService {
 
     /** {@inheritDoc} */
     @Override
-    public HybridResult retrieveHybrid(String query, int topK, boolean enableRerank, boolean enableKAG) {
+    public HybridResult retrieveHybrid(String query, int topK, boolean enableRerank, boolean enableKAG, Long userId) {
         // Step 1: Always run RAG (primary)
         List<RagSearchResultVO> ragResults;
         try {
-            ragResults = ragRetrievalService.retrieve(query, topK * 2, enableRerank);
+            ragResults = ragRetrievalService.retrieve(query, topK * 2, enableRerank, userId);
         } catch (Exception e) {
             log.warn("RAG retrieval failed: {}", e.getMessage());
             ragResults = Collections.emptyList();

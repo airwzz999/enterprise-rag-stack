@@ -58,6 +58,9 @@ public class DocumentChunk {
     /** Document status */
     private Integer docStatus;
 
+    /** Whether the document is public (0-private, 1-public) */
+    private Integer isPublic;
+
     /** Document publish time */
     private String publishTime;
 

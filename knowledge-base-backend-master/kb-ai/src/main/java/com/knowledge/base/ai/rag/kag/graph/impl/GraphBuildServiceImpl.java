@@ -291,7 +291,7 @@ public class GraphBuildServiceImpl implements GraphBuildService {
 
         // Step 2: Chunk the content
         List<DocumentChunk> chunks = chunkingService.chunk(
-                content, docId, title, categoryId, authorId, null, status, doc.getPublishTime());
+                content, docId, title, categoryId, authorId, null, status, doc.getIsPublic(), doc.getPublishTime());
         log.debug("Document chunked: documentId={}, totalChunks={}", docId, chunks.size());
 
         // Step 3 & 4: Extract entities/relations and normalize

@@ -36,7 +36,9 @@ public interface HybridRetrievalService {
      * @param topK          the number of final results to return
      * @param enableRerank  whether LLM reranking is enabled
      * @param enableKAG     whether knowledge graph augmentation is enabled
+     * @param userId        the requesting user's ID, used to scope RAG results to documents
+     *                      they can see (public or authored by them); null means public-only
      * @return the hybrid retrieval result
      */
-    HybridResult retrieveHybrid(String query, int topK, boolean enableRerank, boolean enableKAG);
+    HybridResult retrieveHybrid(String query, int topK, boolean enableRerank, boolean enableKAG, Long userId);
 }

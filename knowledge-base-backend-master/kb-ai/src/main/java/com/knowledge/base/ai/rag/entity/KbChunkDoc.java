@@ -73,6 +73,10 @@ public class KbChunkDoc {
     @Field(name = "doc_status", type = FieldType.Integer)
     private Integer docStatus;
 
+    /** Whether the document is public (0-private, 1-public) */
+    @Field(name = "is_public", type = FieldType.Integer)
+    private Integer isPublic;
+
     /** Document publish time */
     @Field(name = "publish_time", type = FieldType.Date)
     private String publishTime;

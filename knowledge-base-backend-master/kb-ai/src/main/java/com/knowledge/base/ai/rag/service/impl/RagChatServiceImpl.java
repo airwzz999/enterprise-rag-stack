@@ -73,7 +73,7 @@ public class RagChatServiceImpl implements RagChatService {
         Long conversationId = prepareConversation(requestDTO, userId);
 
         // 2. Retrieve relevant knowledge
-        List<RagSearchResultVO> context = safeRetrieve(requestDTO.getContent());
+        List<RagSearchResultVO> context = safeRetrieve(requestDTO.getContent(), userId);
 
         // 3. Build the RAG prompt
         String prompt = buildRagPrompt(requestDTO.getContent(), context);
@@ -131,7 +131,7 @@ public class RagChatServiceImpl implements RagChatService {
 
         try {
             Long conversationId = prepareConversation(requestDTO, userId);
-            List<RagSearchResultVO> context = safeRetrieve(requestDTO.getContent());
+            List<RagSearchResultVO> context = safeRetrieve(requestDTO.getContent(), userId);
             String prompt = buildRagPrompt(requestDTO.getContent(), context);
             String modelName = requestDTO.getModel() != null ? requestDTO.getModel() : modelProvider.getDefaultModelName();
 
@@ -242,11 +242,11 @@ public class RagChatServiceImpl implements RagChatService {
     /**
      * Safe retrieval: catches exceptions and returns an empty list without interrupting the main flow
      */
-    private List<RagSearchResultVO> safeRetrieve(String query) {
+    private List<RagSearchResultVO> safeRetrieve(String query, Long userId) {
         try {
             return ragRetrievalService.retrieve(query,
                     ragProperties.getRetrieval().getDefaultTopK(),
-                    ragProperties.getRerank().isEnabled());
+                    ragProperties.getRerank().isEnabled(), userId);
         } catch (Exception e) {
             log.warn("RAG retrieval failed, falling back to plain LLM answer: {}", e.getMessage());
             return List.of();

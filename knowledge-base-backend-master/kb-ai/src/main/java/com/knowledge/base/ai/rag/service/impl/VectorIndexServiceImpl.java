@@ -20,18 +20,12 @@ import co.elastic.clients.json.JsonData;
 import com.alibaba.fastjson2.JSON;
 import com.knowledge.base.ai.config.RagProperties;
 import com.knowledge.base.ai.rag.entity.DocumentChunk;
-import com.knowledge.base.ai.rag.entity.KbChunkDoc;
 import com.knowledge.base.ai.rag.service.VectorIndexService;
 import com.knowledge.base.ai.vo.RagSearchResultVO;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.data.elasticsearch.core.query.Criteria;
-import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -47,10 +41,13 @@ import java.util.stream.Collectors;
  * <p>Uses Elasticsearch as the vector store, implementing:
  * <ol>
  *   <li><b>Index writes</b>: bulk writes via the low-level ElasticsearchClient (supports the dense_vector field)</li>
- *   <li><b>BM25 search</b>: match queries via ElasticsearchOperations (ik_max_word tokenization)</li>
+ *   <li><b>BM25 search</b>: match queries via the low-level ElasticsearchClient (ik_max_word tokenization)</li>
  *   <li><b>kNN search</b>: knn queries via ElasticsearchClient (cosine similarity)</li>
  *   <li><b>RRF fusion</b>: reciprocal rank fusion, C=60</li>
- * </ol></p>
+ * </ol>
+ * Both BM25 and kNN search are scoped to documents the requesting user can actually see
+ * (published + public, or published + authored by them) via a shared access filter - see
+ * {@link #buildAccessFilter(Long)}.</p>
  *
  * @author airwzz999
  * @since 1.0.0
@@ -61,7 +58,6 @@ import java.util.stream.Collectors;
 public class VectorIndexServiceImpl implements VectorIndexService {
 
     private final ElasticsearchClient esClient;
-    private final ElasticsearchOperations esOperations;
     private final RagProperties ragProperties;
 
     @Resource
@@ -122,15 +118,15 @@ public class VectorIndexServiceImpl implements VectorIndexService {
     /** {@inheritDoc} */
     @Override
     public List<RagSearchResultVO> searchHybrid(String queryText, float[] queryEmbedding,
-                                                 int topK, int hybridTopK, int rrfC) {
+                                                 int topK, int hybridTopK, int rrfC, Long userId) {
         // Run BM25 + kNN in parallel (BM25 only if the embedding is null)
         CompletableFuture<List<SearchResult>> bm25Future = CompletableFuture.supplyAsync(() ->
-                bm25Search(queryText, hybridTopK), asyncTaskExecutor);
+                bm25Search(queryText, hybridTopK, userId), asyncTaskExecutor);
 
         CompletableFuture<List<SearchResult>> knnFuture;
         if (queryEmbedding != null) {
             knnFuture = CompletableFuture.supplyAsync(() ->
-                    knnSearch(queryEmbedding, hybridTopK), asyncTaskExecutor);
+                    knnSearch(queryEmbedding, hybridTopK, userId), asyncTaskExecutor);
         } else {
             knnFuture = CompletableFuture.completedFuture(List.of());
         }
@@ -174,8 +170,9 @@ public class VectorIndexServiceImpl implements VectorIndexService {
     public void createIndexIfNotExists() {
         try {
             if (indexExists()) {
-                // Ensure new field mappings exist (e.g. publish_time)
+                // Ensure new field mappings exist (e.g. publish_time, is_public)
                 ensurePublishTimeMapping();
+                ensureIsPublicMapping();
                 return;
             }
             CreateIndexRequest request = CreateIndexRequest.of(c -> c
@@ -197,6 +194,7 @@ public class VectorIndexServiceImpl implements VectorIndexService {
                             .properties("author_id", p -> p.long_(l -> l))
                             .properties("team_id", p -> p.long_(l -> l))
                             .properties("doc_status", p -> p.integer(i -> i))
+                            .properties("is_public", p -> p.integer(i -> i))
                             .properties("publish_time", p -> p.date(d -> d))
                             .properties("indexed_at", p -> p.date(d -> d))
                             .properties("embedding", p -> p.denseVector(dv -> dv
@@ -229,6 +227,23 @@ public class VectorIndexServiceImpl implements VectorIndexService {
         }
     }
 
+    /**
+     * Ensure the is_public field mapping exists (for compatibility with older index upgrades).
+     * Chunks indexed before this field was introduced have no is_public value, so the access
+     * filter in bm25Search/knnSearch treats a missing value as private (author-only) - they
+     * won't surface for other users until reindexed, rather than defaulting to publicly visible.
+     */
+    private void ensureIsPublicMapping() {
+        try {
+            esClient.indices().putMapping(m -> m
+                    .index(INDEX_NAME)
+                    .properties("is_public", p -> p.integer(i -> i)));
+            log.debug("is_public field mapping updated");
+        } catch (Exception e) {
+            log.debug("Updating is_public mapping: {}", e.getMessage());
+        }
+    }
+
     /** {@inheritDoc} */
     @Override
     public void dropIndex() {
@@ -255,6 +270,7 @@ public class VectorIndexServiceImpl implements VectorIndexService {
         doc.put("author_id", chunk.getAuthorId());
         doc.put("team_id", chunk.getTeamId());
         doc.put("doc_status", chunk.getDocStatus());
+        doc.put("is_public", chunk.getIsPublic());
         doc.put("publish_time", chunk.getPublishTime());
         doc.put("indexed_at", LocalDateTime.now().toString());
         if (chunk.getEmbedding() != null) {
@@ -264,24 +280,61 @@ public class VectorIndexServiceImpl implements VectorIndexService {
     }
 
     /**
+     * Builds the access-control filter shared by BM25 and kNN search: only chunks belonging
+     * to a published document that is either public or authored by the requesting user.
+     *
+     * <p>Team-shared (non-public, non-own) documents are excluded rather than treated as
+     * visible - this service has no way to verify team membership, so failing open there
+     * would just move the same access-control hole to a different boundary. Chunks indexed
+     * before the is_public field existed have no value for it, so they fall on the private
+     * side of this filter (author-only) until reindexed.</p>
+     */
+    private Query buildAccessFilter(Long userId) {
+        Query statusFilter = Query.of(q -> q.term(t -> t.field("doc_status").value(1)));
+
+        Query visibilityFilter = userId != null
+                ? Query.of(q -> q.bool(b -> b
+                        .should(s -> s.term(t -> t.field("is_public").value(1)))
+                        .should(s -> s.term(t -> t.field("author_id").value(userId)))
+                        .minimumShouldMatch("1")))
+                : Query.of(q -> q.term(t -> t.field("is_public").value(1)));
+
+        return Query.of(q -> q.bool(b -> b.filter(statusFilter).filter(visibilityFilter)));
+    }
+
+    /**
      * BM25 keyword search
      */
-    private List<SearchResult> bm25Search(String queryText, int topK) {
+    private List<SearchResult> bm25Search(String queryText, int topK, Long userId) {
         try {
-            Criteria criteria = new Criteria("content").matches(queryText)
-                    .or(new Criteria("document_title").matches(queryText));
-            CriteriaQuery query = new CriteriaQuery(criteria);
-            query.setMaxResults(topK);
+            Query textQuery = Query.of(q -> q.bool(b -> b
+                    .should(s -> s.match(m -> m.field("content").query(queryText)))
+                    .should(s -> s.match(m -> m.field("document_title").query(queryText)))
+                    .minimumShouldMatch("1")));
 
-            SearchHits<KbChunkDoc> hits = esOperations.search(query, KbChunkDoc.class);
+            Query finalQuery = Query.of(q -> q.bool(b -> b
+                    .must(textQuery)
+                    .filter(buildAccessFilter(userId))));
+
+            SearchRequest request = SearchRequest.of(s -> s
+                    .index(INDEX_NAME)
+                    .query(finalQuery)
+                    .size(topK));
+
+            SearchResponse<Map> response = esClient.search(request, Map.class);
 
             List<SearchResult> results = new ArrayList<>();
-            for (SearchHit<KbChunkDoc> hit : hits) {
-                KbChunkDoc doc = hit.getContent();
-                SearchResult sr = SearchResult.of(doc.getChunkId(), doc.getDocumentId(),
-                        doc.getDocumentTitle(), doc.getContent(), doc.getHeading(),
-                        hit.getScore());
-                sr.publishTime = doc.getPublishTime();
+            for (Hit<Map> hit : response.hits().hits()) {
+                Map<String, Object> source = hit.source();
+                if (source == null) continue;
+                SearchResult sr = SearchResult.of(
+                        (String) source.get("chunk_id"),
+                        toLong(source.get("document_id")),
+                        (String) source.get("document_title"),
+                        (String) source.get("content"),
+                        (String) source.get("heading"),
+                        hit.score() != null ? hit.score().floatValue() : 0.0);
+                sr.publishTime = (String) source.get("publish_time");
                 results.add(sr);
             }
             return results;
@@ -296,11 +349,11 @@ public class VectorIndexServiceImpl implements VectorIndexService {
      *
      * <p>Uses a script_score query to implement cosine similarity retrieval (compatible with ES 7.x)</p>
      */
-    private List<SearchResult> knnSearch(float[] queryEmbedding, int topK) {
+    private List<SearchResult> knnSearch(float[] queryEmbedding, int topK, Long userId) {
         try {
             Query scriptScoreQuery = Query.of(q -> q
                     .scriptScore(ss -> ss
-                            .query(sq -> sq.matchAll(m -> m))
+                            .query(buildAccessFilter(userId))
                             .script(s -> s.inline(i -> i
                                     .source("cosineSimilarity(params.query_vector, 'embedding') + 1.0")
                                     .params("query_vector", JsonData.of(toFloatList(queryEmbedding)))))));

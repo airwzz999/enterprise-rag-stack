@@ -45,7 +45,7 @@ public class RagRetrievalServiceImpl implements RagRetrievalService {
 
     /** {@inheritDoc} */
     @Override
-    public List<RagSearchResultVO> retrieve(String query, int topK, boolean enableRerank) {
+    public List<RagSearchResultVO> retrieve(String query, int topK, boolean enableRerank, Long userId) {
         // 1. Create the index (if it doesn't exist)
         vectorIndexService.createIndexIfNotExists();
 
@@ -63,7 +63,7 @@ public class RagRetrievalServiceImpl implements RagRetrievalService {
         int candidateK = Math.max(topK * 2, hybridTopK);
 
         List<RagSearchResultVO> candidates = vectorIndexService.searchHybrid(
-                query, queryEmbedding, candidateK, hybridTopK, rrfC);
+                query, queryEmbedding, candidateK, hybridTopK, rrfC, userId);
 
         if (candidates.isEmpty()) {
             log.info("RAG retrieval returned no results: query={}", query);

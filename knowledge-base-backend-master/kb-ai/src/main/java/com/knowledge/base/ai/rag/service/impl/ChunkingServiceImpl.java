@@ -45,7 +45,7 @@ public class ChunkingServiceImpl implements ChunkingService {
     @Override
     public List<DocumentChunk> chunk(String content, Long documentId, String documentTitle,
                                       Long categoryId, Long authorId, Long teamId, Integer docStatus,
-                                      String publishTime) {
+                                      Integer isPublic, String publishTime) {
         if (content == null || content.isEmpty()) {
             log.warn("Document content is empty, skipping chunking: documentId={}", documentId);
             return List.of();
@@ -84,6 +84,7 @@ public class ChunkingServiceImpl implements ChunkingService {
                         .authorId(authorId)
                         .teamId(teamId)
                         .docStatus(docStatus)
+                        .isPublic(isPublic)
                         .publishTime(publishTime)
                         .build());
             }

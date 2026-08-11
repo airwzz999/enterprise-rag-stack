@@ -4,8 +4,10 @@ import com.knowledge.base.ai.dto.RagSearchRequestDTO;
 import com.knowledge.base.ai.rag.service.RagRetrievalService;
 import com.knowledge.base.ai.vo.RagSearchResultVO;
 import com.knowledge.base.common.result.Result;
+import com.knowledge.base.common.utils.UserContextUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +38,12 @@ public class RagSearchController {
      */
     @PostMapping
     @Operation(summary = "RAG retrieval", description = "RAG-based knowledge base retrieval without generating an answer")
-    public Result<List<RagSearchResultVO>> search(@Valid @RequestBody RagSearchRequestDTO requestDTO) {
+    public Result<List<RagSearchResultVO>> search(@Valid @RequestBody RagSearchRequestDTO requestDTO,
+                                                    HttpServletRequest request) {
         log.info("RAG retrieval request: query={}, topK={}", requestDTO.getQuery(), requestDTO.getTopK());
+        Long userId = UserContextUtil.getUserIdFromHeader(request);
         List<RagSearchResultVO> results = ragRetrievalService.retrieve(
-                requestDTO.getQuery(), requestDTO.getTopK(), requestDTO.isEnableRerank());
+                requestDTO.getQuery(), requestDTO.getTopK(), requestDTO.isEnableRerank(), userId);
         return Result.success(results);
     }
 }

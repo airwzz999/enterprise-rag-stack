@@ -102,6 +102,7 @@ public class ReindexConsumer {
                         Long authorId = doc.getAuthorId();
                         Long teamId = doc.getTeamId();
                         Integer status = doc.getStatus();
+                        Integer isPublic = doc.getIsPublic();
 
                         if (content == null || content.isEmpty()) {
                             log.warn("Document content is empty, skipping: documentId={}", docId);
@@ -115,7 +116,7 @@ public class ReindexConsumer {
                         // Chunk + embed + index
                         List<DocumentChunk> chunks = chunkingService.chunk(
                                 content, docId, title, categoryId, authorId, teamId, status,
-                                doc.getPublishTime());
+                                isPublic, doc.getPublishTime());
 
                         if (!chunks.isEmpty()) {
                             List<String> texts = chunks.stream().map(DocumentChunk::getContent).toList();
@@ -234,6 +235,7 @@ public class ReindexConsumer {
                 .authorName((String) raw.getOrDefault("authorName", ""))
                 .teamId(toLong(raw.get("teamId")))
                 .status(toInt(raw.get("status")))
+                .isPublic(toInt(raw.get("isPublic")))
                 .summary((String) raw.get("summary"))
                 .publishTime(getString(raw, "publishTime"))
                 .build();

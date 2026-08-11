@@ -25,10 +25,11 @@ public interface ChunkingService {
      * @param authorId      author ID
      * @param teamId        team ID
      * @param docStatus     document status
+     * @param isPublic      whether the document is public (0-private, 1-public)
      * @param publishTime   document publish time
      * @return the list of chunks
      */
     List<DocumentChunk> chunk(String content, Long documentId, String documentTitle,
                               Long categoryId, Long authorId, Long teamId, Integer docStatus,
-                              String publishTime);
+                              Integer isPublic, String publishTime);
 }

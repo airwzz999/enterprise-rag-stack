@@ -58,7 +58,7 @@ public class KAGChatServiceImpl implements KAGChatService
 
         // Step 1: Hybrid retrieval (RAG + KAG)
         HybridResult hybridResult = hybridRetrievalService.retrieveHybrid(
-                query, topK, enableRerank, enableKAG);
+                query, topK, enableRerank, enableKAG, userId);
 
         // Step 2: Build KAG-enhanced prompt
         String prompt = buildKAGPrompt(query, hybridResult);
@@ -99,7 +99,7 @@ public class KAGChatServiceImpl implements KAGChatService
 
                 // Hybrid retrieval
                 HybridResult hybridResult = hybridRetrievalService.retrieveHybrid(
-                        query, 5, true, enableKAG);
+                        query, 5, true, enableKAG, userId);
 
                 // Build prompt and stream
                 String prompt = buildKAGPrompt(query, hybridResult);

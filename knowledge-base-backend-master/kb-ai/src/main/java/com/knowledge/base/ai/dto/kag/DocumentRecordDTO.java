@@ -44,6 +44,9 @@ public class DocumentRecordDTO {
     /** Document status */
     private Integer status;
 
+    /** Whether the document is public (0-private, 1-public) */
+    private Integer isPublic;
+
     /** Summary */
     private String summary;
 
