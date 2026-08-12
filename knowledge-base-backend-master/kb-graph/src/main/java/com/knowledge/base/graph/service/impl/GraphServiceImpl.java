@@ -1,5 +1,6 @@
 package com.knowledge.base.graph.service.impl;
 
+import com.knowledge.base.common.exception.BusinessException;
 import com.knowledge.base.graph.dto.CommunityMemberDTO;
 import com.knowledge.base.graph.service.GraphService;
 import com.knowledge.base.graph.vo.*;
@@ -29,12 +30,30 @@ public class GraphServiceImpl implements GraphService {
 
     private final Neo4jClient neo4jClient;
 
+    /**
+     * The node labels actually written to Neo4j (see the {@code @Node(primaryLabel = ...)}
+     * entities in {@code graph.entity.node}). {@code type}/{@code sourceType}/{@code targetType}
+     * are spliced directly into Cypher as label names below - since Neo4j doesn't support
+     * parameterizing labels, they must be checked against this allowlist first, or a caller
+     * could inject arbitrary Cypher (e.g. {@code DETACH DELETE}) via the request param.
+     */
+    private static final Set<String> VALID_NODE_LABELS =
+            Set.of("KnowledgeDocument", "DocumentChunk", "KnowledgeEntity");
+
+    private static void validateNodeLabel(String type) {
+        if (type != null && !type.isEmpty() && !VALID_NODE_LABELS.contains(type)) {
+            throw new BusinessException("Unsupported node type: " + type
+                    + ", supported types: " + String.join(", ", VALID_NODE_LABELS));
+        }
+    }
+
     // ==================== Node queries ====================
 
     @Override
     @Cacheable(value = "graphNodes", key = "#type ?: 'all'")
     public List<GraphNodeVO> getNodes(String type) {
         log.info("Get node list, type={}", type);
+        validateNodeLabel(type);
 
         String cypher;
         if (type != null && !type.isEmpty()) {
@@ -63,6 +82,8 @@ public class GraphServiceImpl implements GraphService {
     @Cacheable(value = "graphEdges", key = "#sourceType + '_' + #targetType")
     public List<GraphEdgeVO> getEdges(String sourceType, String targetType) {
         log.info("Get edge list, sourceType={}, targetType={}", sourceType, targetType);
+        validateNodeLabel(sourceType);
+        validateNodeLabel(targetType);
 
         StringBuilder cypher = new StringBuilder("MATCH (a)-[r]-(b) WHERE 1=1");
         if (sourceType != null && !sourceType.isEmpty()) {
